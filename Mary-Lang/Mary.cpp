@@ -3,7 +3,7 @@
 
 int main()
 {
-	Mary::Lexer::Scanner scanner( "file.axd" );
+	Mary::Lexer::Scanner scanner( "../Examples/ClassStrInterpol.mj" );
 	Mary::Lexer::Token token = scanner.getNextToken();
 	while( token.type() != Mary::Lexer::TokenType::TK_EOF 
 		&& token.type() != Mary::Lexer::TokenType::TK_INVALID )

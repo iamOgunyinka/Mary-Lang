@@ -1,9 +1,9 @@
-<<<<<<< HEAD
 Debug/
-
 *.sdf
 Mary-Lang/Debug/
 Mary-Lang.opensdf
+ipch/
+UnitTest/Debug/
 =======
 # Compiled Object files
 *.slo
@@ -33,4 +33,3 @@ Mary-Lang.opensdf
 *.exe
 *.out
 *.app
->>>>>>> 1380333bc3e2415dd2927fbe8325f3354bd6f3ce

@@ -157,7 +157,7 @@ namespace Mary
 			static void initLookupTable();
 
 			friend std::wostream & operator<<( std::wostream & os, Token const & t ){
-				return os << L"ID: '" << ( t._id ? t.id() : L"" ) << L"', " << t.pos() << L" : " 
+				return os << L"ID: '" << t.id() << L"', " << t.pos() << L" : " 
 					<< static_cast<int>( t.type() );
 			}
 		private:
