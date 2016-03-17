@@ -1,5 +1,36 @@
+<<<<<<< HEAD
 Debug/
 
 *.sdf
 Mary-Lang/Debug/
 Mary-Lang.opensdf
+=======
+# Compiled Object files
+*.slo
+*.lo
+*.o
+*.obj
+
+# Precompiled Headers
+*.gch
+*.pch
+
+# Compiled Dynamic libraries
+*.so
+*.dylib
+*.dll
+
+# Fortran module files
+*.mod
+
+# Compiled Static libraries
+*.lai
+*.la
+*.a
+*.lib
+
+# Executables
+*.exe
+*.out
+*.app
+>>>>>>> 1380333bc3e2415dd2927fbe8325f3354bd6f3ce
