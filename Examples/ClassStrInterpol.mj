@@ -1,0 +1,63 @@
+class BasicColor
+{
+    protected var r, g, b;
+    construct BasicColor( r, g, b )
+    {   
+        this.r = r;
+        this.g = g;
+        this.b = b;
+    }
+    
+    construct BasicColor()
+    {
+        this.BasicColor( 1, 1, 1 );
+    }
+    
+    public function GetRGB()
+    {
+        return { "r": r, "g": g, "b": b };
+    }
+    
+    public function GetR(): int { return r; }
+    public function GetG(): int { return g; }
+    public function GetB(): int { return b; }
+};
+
+class AlphaColor extends BasicColor
+{
+    private int a;
+    construct AlphaColor( r, g, b, _a )
+    {
+        base.BasicColor( r, g, b );
+        a = _a;
+    }
+    construct AlphaColor( _a )
+    {
+        base.BasicColor();
+        a = _a;
+    }
+    public function GetA() { return a; }
+    public function GetRGBA()
+    {
+        var rgb = base.GetRGB();
+        return rgb.append( { "a": a } );
+    }
+};
+
+function apply( func, rgba )
+{
+    for( var c in rgba ){
+        func( c );
+    }
+}
+
+function main(): int
+{
+    BasicColor bc = new AlphaColor( 0xFF, 0b10, 076, 11 );
+    var rgba = bc.getRGBA();
+    var display = @( color_component ){ System.IO.PrintLn( "Name: #{color_component[0]}, Value: #{color_component[1]}." ) };
+    apply( display, rgba );
+    apply( @( cc ) { }, rgba );
+    
+    return 0;
+}

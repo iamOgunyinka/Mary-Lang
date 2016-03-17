@@ -1,0 +1,370 @@
+Program                     ::=
+        SourceElements $
+;
+
+SourceElements              ::=
+        SourceElement SourceElementPrime
+;
+
+SourceElementsPrime         ::=
+        SourceElement SourceElementsPrime | Epsilon
+;
+
+SourceElement               ::=
+        Statement
+;
+
+Statement               ::=
+        CompoundStatement
+    |   CaseOfStatement
+    |   ConditionalStatement
+    |   DeclarationStatement
+    |   EmptyStatement
+    |   ExpressionStatement
+    |   IterativeStatement
+    |   JumpStatement
+    |   LabelledStatement
+;
+
+CompoundStatement       ::=
+        "{" BlockItem "}"
+;
+
+BlockItem               ::=
+        SourceElements
+;
+
+LabelledStatement       ::=
+        "#" "Identifier" ":" Statement
+    |   Literal ":" Statement
+;
+
+Literal                 ::=
+        NullLiteral
+    |   BooleanLiteral
+    |   NumericLiteral
+    |   StringLiteral
+;
+
+NullLiteral             ::=
+        "null"
+;
+
+BooleanLiteral          ::=
+        "true"
+    |   "false"
+;
+
+NumericLiteral          ::=
+        "NumericLiterals"
+;
+
+StringLiteral           ::=
+        "StringLiteral"
+;
+
+CaseOfStatement         ::=
+        "case" Expression "of" "{" LabelledStatement "}" CaseOfStatementHelper
+;
+
+CaseOfStatementHelper   ::=
+        "else" Statement
+    |   Epsilon
+;
+
+ConditionalStatement    ::=
+        "if" "(" Expression ")" Statement ConditionalStatementPrime
+;
+
+ConditionalStatementPrime ::=
+        "else" Statement
+    |   Epsilon
+;
+
+IterativeStatement      ::=
+        "do" Statement "while"  "(" Expression ")" ";"
+    |   "while"                 "(" Expression ")" Statement
+    |   "for" ForStatementHelper
+;
+
+ForStatementHelper      ::=
+        "(" DeclarationStatement OptionalExpression ";" OptionalExpression ";" OptionalExpression ")" Statement
+    |   "(" Expression "in" Expression ")" Statement
+    |   "each" "(" EachHelper
+;
+
+OptionalExpression      ::=
+        Expression
+    |   Epsilon
+;
+    
+EachHelper              ::=
+        DeclarationStatement    "in" Expression ")" Statement
+    |   Expression              "in" Expression ")" Statement
+;
+
+EmptyStatement          ::=
+        ";"
+;
+
+DeclarationStatement    ::=
+        ClassDeclaration
+    |   EnumDeclaration
+    |   VariableDeclaration
+    |   FunctionDeclaration
+;
+
+VariableDeclaration     ::=
+        "var" VarDeclarationList ";"
+    |   "const" VariableDeclaration
+    |   TypeSpecifier ConcreteDeclarationList ";"
+;
+
+TypeSpecifier           ::=
+        "Identifier"
+    |   BuiltinTypes
+;
+
+BuiltinTypes            ::=
+        "int"
+    |   "double"
+    |   "string"
+    |   "boolean"
+;
+
+VarDeclarationList ::=
+        VarDecl VarDeclHelper
+;
+
+VarDeclHelper              ::=
+        "," VarDecl VarDeclHelper
+    |   Epsilon
+;
+
+VarDecl                   ::=
+        "Identifier" Other
+;
+
+ConcreteDeclarationList ::=
+        CDecl CDeclHelper
+;
+
+CDeclHelper             ::=
+        "," CDecl CDeclHelper
+    |   Epsilon
+;
+
+Other                     ::=
+    |   ":" TypeSpecifier OptionalInitalizer
+    |   OptionalInitalizer
+;
+
+CDecl                   ::=
+        "Identifier" OptionalInitalizer
+;
+
+OptionalInitalizer      ::=
+        "=" AssignmentExpression
+    |   Epsilon
+;
+
+EnumDeclaration         ::=
+        "enum" "Identifier" "{" EnumeratorList "}" ";"
+;
+
+EnumeratorList          ::=
+        Enumerator EnumeratorListHelper
+;
+
+EnumeratorListHelper     ::=
+        "," Enumerator EnumeratorListHelper
+    |   Epsilon
+;
+
+Enumerator              ::=
+        EnumeratorConstant OptionalEnumeratorInitializer
+;
+
+OptionalEnumeratorInitializer ::=
+        "=" ConstantExpression
+    |   Epsilon
+;
+
+EnumeratorConstant      ::=
+        "Identifier"
+;
+
+ConstantExpression      ::=
+        NumericLiterals
+;
+
+ClassDeclaration        ::=
+        "class" "Identifier" OptionalBaseClasses "{" ClassBody "}" ";"
+;
+
+OptionalBaseClasses    ::=
+        "extends" TypeSpecifier TypeSpecifierList
+    |   Epsilon
+;
+
+TypeSpecifierList       ::=
+        "," TypeSpecifier TypeSpecifierList
+    |   Epsilon
+;
+
+ClassBody               ::=
+        OptionalAccessSpecifier ClassBodyList
+;
+
+ClassBodyList           ::=
+        DeclarationStatement
+    |   MethodDeclarationStatement
+;
+
+OptionalAccessSpecifier ::=
+        "private"
+    |   "protected"
+    |   "public"
+    |   Epsilon
+;
+
+FunctionDeclaration         ::=
+        "function" "Identifier" "(" RestOfFunctionDeclaration
+;
+
+RestOfFunctionDeclaration   ::=
+        ")"                 ":" TypeSpecifier FunctionBody
+    |   ParameterList ")"   ":" TypeSpecifier FunctionBody
+    |   ")"                                   FunctionBody
+    |   ParameterList ")"                     FunctionBody
+;
+
+FunctionBody                ::=
+    "{" SourceElements "}"
+;
+
+ParameterList               ::=
+        "Identifier" RestOfParameterList
+;
+
+RestOfParameterList         ::=
+        "," "Identifier" RestOfParameterList
+    |   Epsilon
+;
+
+MethodDeclarationStatement  ::=
+        "method" "Identifier" RestOfMethodDeclaration
+;
+
+RestOfMethodDeclaration ::=
+        "{" SourceElements "}"
+    |   "(" RestOfFunctionDeclaration
+;
+
+ExpressionStatement     ::=
+        Expression
+;
+
+Expression              ::=
+        AssignmentExpression RestOfExpression
+;
+
+RestOfExpression        ::=
+        "," AssignmentExpression RestOfExpression
+    |   Epsilon
+;
+
+AssignmentExpression    ::=
+        ConditionalExpression
+    |   PostfixExpression AssignmentOperator AssignmentExpression
+;
+
+AssignmentOperator      ::=
+        =
+    |   *=
+    |   /=
+    |   %=
+    |   +=
+    |   -=
+    |   <<=
+    |   >>=
+    |   &=
+    |   ^=
+    |   |=
+;
+
+ConditionalExpression   ::=
+        LogicalOrExpression
+    |   LogicalOrExpression "?" Expression ":" ConditionalExpression
+;
+
+UnaryOperator           ::=
+    |   -
+    |   ~
+    |   !
+;
+
+/****************************
+
+PrimaryExpression       ::=
+        "this"
+    |   "Identifier"
+    |   ArrayLiteral
+    |   Literal
+    |   ObjectLiteral
+    |   "(" Expression ")"
+;
+
+ArrayLiteral            ::=
+    |   "[" OptionalElementList "]"
+;
+
+OptionalElementList     ::=
+        AssignmentExpression OptionalElementListHelper
+    |   Epsilon
+;
+
+OptionalElementListHelper   ::=
+        "," AssignmentExpression OptionalElementListHelper
+    |   Epsilon
+;
+
+ObjectLiteral           ::=
+        "{" "}"
+    |   "{" PropertyNameAndValueList "}"
+    |   "{" PropertyNameAndValueList "}"
+;
+
+PropertyNameAndValueList ::=
+        PropertyAssignment PropertyNameAndValueListHelper
+;
+
+PropertyNameAndValueListHelper      ::=
+        "," PropertyAssignment PropertyNameAndValueListHelper
+    |   Epsilon
+;
+
+PropertyAssignment      ::=
+        PropertyName ":" AssignmentExpression
+    |   "Identifier" PropertyName "(" ")" "{" FunctionBody "}"
+    |   "Identifier" PropertyName "(" PropertySetParameterList ")" "{" FunctionBody "}"
+;
+
+PropertyName            ::=
+        "Identifier"
+    |   StringLiteral
+    |   NumericLiteral
+;
+
+PropertySetParameterList ::=
+        "Identifier"
+;
+
+JumpStatement           ::=
+        "continue" ";"
+    |   "break" ";"
+    |   "return" Expression ";"
+    |   "exit" "case" ";"
+;
+
+***********************************/
