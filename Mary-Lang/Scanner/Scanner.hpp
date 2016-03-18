@@ -26,7 +26,8 @@ namespace Mary
 		public:
 			Scanner( char const * filename );
 			~Scanner();
-			Token getNextToken();
+			Token	getNextToken();
+			bool	setNewFileName( char const * filename );
 		}; // Scanner
 	}
 } // namespace Mary

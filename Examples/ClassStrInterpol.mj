@@ -1,3 +1,4 @@
+##
 class BasicColor
 {
     protected var r, g, b;

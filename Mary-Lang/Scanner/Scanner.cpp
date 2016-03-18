@@ -23,51 +23,11 @@ namespace Mary
 			marker_position( 0 ), begin_mark( 0 ),
 			buffer_size( 0 )
 		{
-			std::ifstream file( filename );
-			char *temp_buffer = nullptr;
-			if( file ) {
-				file.seekg( 0, file.end );
-				buffer_size = static_cast<std::size_t>( file.tellg() );
-				temp_buffer = new char[ buffer_size + 1];
-				file.seekg( file.beg );
-				file.read( temp_buffer, buffer_size );
+			if( setNewFileName( filename ) ){
+				Token::initLookupTable();
 			} else {
-				std::wcerr << L"Unable to open specified file" << std::endl;
-				exit( 1 );
+				exit( -1 );
 			}
-#ifdef _WIN32
-			auto wsize = MultiByteToWideChar( CP_UTF8, 0, temp_buffer, -1, NULL, 0 );
-			if( wsize == 0 ){
-				delete []temp_buffer;
-				std::wcerr << L"Unable to convert file to Unicode" << std::endl;
-				exit( 1 );
-			} else {
-				buffer = new wchar_t[ wsize + 1 ];
-				int new_wsize = MultiByteToWideChar( CP_UTF8, 0, temp_buffer, -1, buffer, wsize );
-				if( new_wsize == 0 ){
-					delete []temp_buffer;
-					std::wcerr << L"Unable to convert file characters to Unicode" << std::endl;
-					exit( 1 );
-				}
-			}
-#else
-			std::size_t wsize = std::mbstowcs( NULL, temp_buffer, buffer_size );
-			if( wsize == static_cast<std::size_t>( -1 ) ){
-				delete []temp_buffer;
-				std::wcerr << L"Unable to convert file character to Unicode" << std::endl;
-				exit( 1 );
-			} else {
-				buffer = new wchar_t[ wsize ];
-				std::size_t new_wsize = std::mbstowcs( buffer, temp_buffer, buffer_size );
-				if( new_wsize == static_cast<std::size_t>( -1 ) ){
-					delete []temp_buffer;
-					std::wcerr << L"Unable to convert file character to Unicode" << std::endl;
-					exit( 1 );
-				}
-			}
-#endif
-			if( temp_buffer ) delete []temp_buffer;
-			Token::initLookupTable();
 		}
 
 		Scanner::~Scanner()
@@ -78,7 +38,8 @@ namespace Mary
 		void Scanner::nextChar()
 		{
 			if( marker_position == buffer_size ) {
-				current_token = EOF;
+				current_token = L'\0';
+
 				return;
 			}
 
@@ -92,6 +53,61 @@ namespace Mary
 			++marker_position;
 		}
 
+		bool Scanner::setNewFileName( char const * filename )
+		{
+			char* buffer;
+			std::ifstream in( filename, std::ios_base::in | std::ios_base::binary 
+				| std::ios_base::ate );
+			if( in ) {
+				// get file size
+				in.seekg(0, std::ios::end);
+				buffer_size = (size_t)in.tellg();
+				in.seekg(0, std::ios::beg);
+				buffer = (char*)calloc(buffer_size + 1, sizeof(char));
+				in.read(buffer, buffer_size);
+				// close file
+				in.close();
+			}
+			else {
+				std::wcerr << L"Unable to open source file: " << filename << std::endl;
+				return false;
+			}
+
+			// convert unicode
+#if defined( _WIN32 ) && defined( _MSC_VER )
+			int wsize = MultiByteToWideChar( CP_UTF8, 0, buffer, -1, nullptr, 0);
+			if( !wsize ) {
+				std::wcerr << L"Unable to open source file: " << filename << std::endl;
+				return false;
+			}
+			wchar_t* wbuffer = new wchar_t[wsize];
+			int check = MultiByteToWideChar( CP_UTF8, 0, buffer, -1, wbuffer, wsize);
+			if(!check) {
+				std::wcerr << L"Unable to open source file: " << filename << std::endl;
+				return false;
+			}
+#else
+			size_t wsize = std::mbstowcs( nullptr, buffer, buffer_size);
+			if( wsize == (size_t)-1 ) {
+				free( buffer );
+				std::wcerr << L"Unable to open source file: " << filename << std::endl;
+				return false;
+			}
+			wchar_t* wbuffer = new wchar_t[wsize + 1];
+			size_t check = std::mbstowcs( wbuffer, buffer, buffer_size );
+			if( check == (size_t)-1 ) {
+				free( buffer );
+				delete[] wbuffer;
+				std::wcerr << L"Unable to open source file: " << filename << std::endl;
+				return false;
+			}
+			wbuffer[wsize] = L'\0';
+#endif
+			free(buffer);
+			this->buffer = wbuffer;
+			return true;
+		}
+
 		Token Scanner::getNextToken()
 		{
 			for( ; ; )
@@ -103,7 +119,7 @@ namespace Mary
 				} else {
 					switch ( current_token )
 					{
-					case EOF:
+					case L'\0':
 						marker_position = buffer_size;
 						return Token( pos, TokenType::TK_EOF );
 					case L' ':
@@ -228,11 +244,11 @@ namespace Mary
 						switch ( current_token )
 						{
 						case L'<':
-                            nextChar(); 
-                            switch( current_token ){
+							nextChar(); 
+							switch( current_token ){
 							case L'=': nextChar(); return Token( pos, TokenType::TK_LSASSIGN );
-                            default: return Token( pos, TokenType::TK_LSHIFT );
-                            }
+							default: return Token( pos, TokenType::TK_LSHIFT );
+							}
 						case L'=': nextChar(); return Token( pos, TokenType::TK_LEQL );
 						default: return Token( pos, TokenType::TK_LESS );
 						}
@@ -241,12 +257,12 @@ namespace Mary
 						switch ( current_token )
 						{
 						case L'>': 
-                            nextChar(); 
-                            switch( current_token )
-                            {
-                            case L'=': nextChar(); return Token( pos, TokenType::TK_RSASSIGN );
-                            default: return Token( pos, TokenType::TK_RSHIFT );
-                            }
+							nextChar(); 
+							switch( current_token )
+							{
+							case L'=': nextChar(); return Token( pos, TokenType::TK_RSASSIGN );
+							default: return Token( pos, TokenType::TK_RSHIFT );
+							}
 						case L'=': nextChar(); return Token( pos, TokenType::TK_GEQL );
 						default: return Token( pos, TokenType::TK_GREATER );
 						}
@@ -278,9 +294,9 @@ namespace Mary
 							return Token( pos, TokenType::TK_EQL );
 						default: return Token( pos, TokenType::TK_ASSIGN );
 						}
-                    case L'@':
-                        nextChar();
-                        return Token( pos, TokenType::TK_AT );
+					case L'@':
+						nextChar();
+						return Token( pos, TokenType::TK_AT );
 					case L':':
 						nextChar();
 						return Token( pos, TokenType::TK_COLON );
@@ -291,7 +307,8 @@ namespace Mary
 						nextChar();
 						return Token( pos, TokenType::TK_COMMA );
 					default:
-                        //~nextChar();
+						nextChar();
+						diag.warning( pos, L"Invalid character" );
 						return Token( pos, TokenType::TK_INVALID );
 					}
 				}

@@ -4,11 +4,11 @@
 #include <cstdio>
 #include "Position.hpp"
 
-#define RESET       "\033[0m"
-#define BOLD        "\033[1;37m"
-#define NOTE        "\033[1;2;37m"
-#define WARNING     "\033[1;35m"
-#define ERROR       "\033[1;31m"
+#define DIAG_RESET       "\033[0m"
+#define DIAG_BOLD        "\033[1;37m"
+#define DIAG_NOTE        "\033[1;2;37m"
+#define DIAG_WARNING     "\033[1;35m"
+#define DIAG_ERROR       "\033[1;31m"
 
 namespace Mary
 {
@@ -29,9 +29,9 @@ namespace Mary
 
 			inline void error( wchar_t const * what )
 			{
-				if ( color_ ) std::cerr << BOLD;
+				if ( color_ ) std::cerr << DIAG_BOLD;
 				std::cerr << what << std::endl;
-				if ( color_ ) std::cerr << RESET;
+				if ( color_ ) std::cerr << DIAG_RESET;
 			}
 			inline void error( Position const & pos, wchar_t const * m ) {
 				++numErrors_;
@@ -57,24 +57,24 @@ namespace Mary
 			void print_pos( const Position pos, const Kind kind, wchar_t const * what ) {
 				switch ( kind ) {
 				case Kind::K_Note:
-					if (color_) { std::cerr << NOTE;    } 
+					if (color_) { std::cerr << DIAG_NOTE;    } 
 					std::wcerr << L"note: ";
 					break;
 				case Kind::K_Warning: 
-					if (color_) { std::cerr << WARNING; } 
+					if (color_) { std::cerr << DIAG_WARNING; } 
 					std::wcerr << L"warning: "; 
 					break;
 				case Kind::K_Error:   
-					if (color_) { std::cerr << ERROR;   } 
+					if (color_) { std::cerr << DIAG_ERROR;   } 
 					std::wcerr << L"error: ";
 					break;
 				}
-				if ( color_) std::cerr << BOLD;
+				if ( color_) std::cerr << DIAG_BOLD;
 				std::wcerr << what << L" on ";
 				pos.dump();
-				if (color_ ) std::cerr << RESET;
+				if (color_ ) std::cerr << DIAG_RESET;
 				
-				if (color_) std::cerr << RESET;
+				if (color_) std::cerr << DIAG_RESET;
 				std::endl( std::cerr );
 			}
 		};
@@ -83,10 +83,10 @@ namespace Mary
 			static Diagnostic diag = true;
 			diag.error( what );
 		}
-#undef RESET
-#undef BOLD
-#undef NOTE
-#undef WARNING
-#undef ERROR
+#undef DIAG_RESET
+#undef DIAG_BOLD
+#undef DIAG_NOTE
+#undef DIAG_WARNING
+#undef DIAG_ERROR
 	} // namespace Support
 } // namespace Mary

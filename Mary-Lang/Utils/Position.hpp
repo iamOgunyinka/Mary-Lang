@@ -20,7 +20,7 @@ namespace Mary
             
             friend inline std::wostream & operator<<( std::wostream & os, Position const & pos )
 			{
-				return os << pos._line_number << ":" << pos._column_number;
+				return os << pos._line_number << L":" << pos._column_number;
 			}
 
 			inline void dump() const

@@ -7,32 +7,33 @@
 
 namespace Mary
 {
-    namespace Support
-    {
-        struct WStrHash 
-        {
-            int operator()( wchar_t const * wstr )
-            {
-                wchar_t const *i = wstr;
-                int offset = 'a' - 1;
-                std::size_t hash = 0;
+	namespace Support
+	{
+		struct WStrHash 
+		{
+			std::size_t operator()( wchar_t const * const wstr ) const
+			{
+				wchar_t const *i = wstr;
+				int offset = L'a' - 1;
+				std::size_t hash = 0;
 
-                while( *i != L'\0' ){
-                    hash = hash << 1 ^ ( *i - offset );
-                    ++i;
-                }
-                return hash;
-            }
-        };
-        // To-DO: Verify its correctness
-        struct WStrEqual
-        {
-            bool operator ()( wchar_t const * previous, wchar_t const * current )
-            {
-                return std::wcscmp( previous, current ) == 0;
-            }
-        };
-    } //namespace Support
+				while( *i != L'\0' ){
+					hash = hash << 1 ^ ( *i - offset );
+					++i;
+				}
+				return hash;
+			}
+		};
+		// To-DO: Verify its correctness
+		struct WStrEqual
+		{
+			bool operator ()( wchar_t const * const previous, 
+				wchar_t const * const current ) const
+			{
+				return std::wcscmp( previous, current ) == 0;
+			}
+		};
+	} //namespace Support
 	namespace Lexer
 	{
 		enum class TokenType
@@ -68,11 +69,11 @@ namespace Mary
 			TK_STATIC,
 			TK_CLASS,
 			TK_EXTENDS,
-            TK_CONSTRUCT,
-            TK_DECLTYPE,
+			TK_CONSTRUCT,
+			TK_DECLTYPE,
 
 			/* Operators */
-            TK_AT,
+			TK_AT,
 			TK_DOT,
 			TK_INCREMENT, // ++
 			TK_DECREMENT, // --
@@ -106,9 +107,9 @@ namespace Mary
 			TK_LESS,   // <
 			TK_GREATER, // >
 			TK_LEQL,   // <=
-            TK_LSASSIGN, // <<= 
+			TK_LSASSIGN, // <<= 
 			TK_GEQL,   // >=
-            TK_RSASSIGN, // >>=
+			TK_RSASSIGN, // >>=
 			TK_EQL,    // ==
 			TK_NOTEQL,   // !=
 			TK_LSHIFT, // <<
@@ -134,19 +135,25 @@ namespace Mary
 				_pos( std::move( pos ) ),
 				_type( type )
 			{
+				auto c = getName( type );
+				_id = Mary::Support::mystrndup( c, wcslen( c ) );
 			}
 
-			Token& operator=( Token && tk ){
-				_pos = std::move( tk.pos() );
-				_type = tk.type();
-				_id.reset( tk._id.release() );
+			Token& operator=( Token const & t )
+			{
+				if( this != &t )
+				{
+					_pos = t.pos();
+					_type = t.type();
+					delete [] _id;
+					_id = Mary::Support::mystrndup( t.id(), wcslen( t.id() ) );
+				}
 				return *this;
 			}
 
-			wchar_t const*      id() const { 
-				if( !_id ) return getName( _type );
-				return _id.get(); 
-			}
+			~Token(){ delete[] _id; }
+
+			wchar_t const*      id() const { return _id; }
 			Support::Position	pos() const { return _pos; }
 			TokenType			type() const { return _type; }
 
@@ -162,7 +169,7 @@ namespace Mary
 			}
 		private:
 			wchar_t const *				getName( TokenType tt ) const;
-			std::unique_ptr<wchar_t[]>	_id;
+			wchar_t					    *_id;
 			Support::Position			_pos;
 			TokenType					_type;
 		}; // struct Token
