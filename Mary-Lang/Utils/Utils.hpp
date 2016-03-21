@@ -3,11 +3,11 @@
 #include <cwctype>
 #include <cwchar>
 
-namespace Mary
+namespace MaryLang
 {
 	namespace Support
 	{
-		static wchar_t* mystrndup( wchar_t const *str, size_t n )
+		static wchar_t* Mystrndup( wchar_t const *str, size_t n )
 		{
 			wchar_t *dup = new wchar_t[ n + 1 ];
 #if defined( _WIN32 ) && defined ( _MSC_VER )
@@ -24,4 +24,4 @@ namespace Mary
 #endif
 		}
 	} // namespace Support
-}//namespace Mary
+}//namespace MaryLang

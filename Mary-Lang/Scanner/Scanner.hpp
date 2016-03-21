@@ -3,7 +3,7 @@
 #include "../Utils/Diagnostics.hpp"
 #include <memory>
 
-namespace Mary
+namespace MaryLang
 {
 	namespace Lexer
 	{
@@ -17,17 +17,17 @@ namespace Mary
 			int					marker_position, begin_mark;
 			int					buffer_size;
 		private:
-			Token	getNumberToken();
-			Token	getIntegerToken();
-			Token	getStringLiteralToken();
-			void	nextChar();
-			Token	identifierOrKeywordToken();
-			Token	identifierOrKeywordToken( Support::Position pos );
+			Token	GetNumberToken();
+			Token	GetIntegerToken();
+			Token	GetStringLiteralToken();
+			void	NextChar();
+			Token	IdentifierOrKeywordToken();
+			Token	IdentifierOrKeywordToken( Support::Position pos );
 		public:
 			Scanner( char const * filename );
 			~Scanner();
-			Token	getNextToken();
-			bool	setNewFileName( char const * filename );
+			Token	GetNextToken();
+			bool	SetNewFileName( char const * filename );
 		}; // Scanner
 	}
-} // namespace Mary
+} // namespace MaryLang

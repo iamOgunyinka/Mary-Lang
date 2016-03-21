@@ -4,7 +4,7 @@
 #include <sstream>
 #include <string>
 
-namespace Mary
+namespace MaryLang
 {
 	namespace Support
 	{
@@ -23,10 +23,10 @@ namespace Mary
 				return os << pos._line_number << L":" << pos._column_number;
 			}
 
-			inline void dump() const
+			inline void Dump() const
 			{
 				std::wcerr << *this << std::endl;
 			}
 		}; // Position
 	} // namespace Support
-} // namespace Mary
+} // namespace MaryLang

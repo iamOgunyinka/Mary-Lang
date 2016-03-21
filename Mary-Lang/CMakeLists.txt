@@ -17,6 +17,7 @@ add_definitions( "-std=c++11" )
 set(SOURCES
     ${SCANNER_DIR}/Scanner.cpp
     ${SCANNER_DIR}/tokens.cpp
+    ${PARSER_DIR}/Parser.cpp
     ${MARY_LANG_DIR}/Mary.cpp
 )
 
@@ -28,4 +29,4 @@ include_directories(
     ${MARY_LANG_DIR}/Utils/
 )
 
-add_executable( MaryLang ${HEADER} ${SOURCES} )
+add_executable( MaryLang ${SOURCES} )

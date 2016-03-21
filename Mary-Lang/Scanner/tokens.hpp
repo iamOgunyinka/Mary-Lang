@@ -5,7 +5,7 @@
 #include "../Utils/Position.hpp"
 #include "../Utils/Utils.hpp"
 
-namespace Mary
+namespace MaryLang
 {
 	namespace Support
 	{
@@ -24,7 +24,7 @@ namespace Mary
 				return hash;
 			}
 		};
-		// To-DO: Verify its correctness
+
 		struct WStrEqual
 		{
 			bool operator ()( wchar_t const * const previous, 
@@ -55,8 +55,10 @@ namespace Mary
 			TK_ELSE,
 			TK_AMONG,
 			TK_CHECK,
+			TK_ISIT, // is it?
 			TK_CONTINUE,
 			TK_LEAVE,
+			TK_FUNCTION,
 			TK_INT,
 			TK_DOUBLE,
 			TK_STRING,
@@ -135,43 +137,43 @@ namespace Mary
 				_pos( std::move( pos ) ),
 				_type( type )
 			{
-				auto c = getName( type );
-				_id = Mary::Support::mystrndup( c, wcslen( c ) );
+				auto c = GetName( type );
+				_id = Support::Mystrndup( c, wcslen( c ) );
 			}
 
 			Token& operator=( Token const & t )
 			{
 				if( this != &t )
 				{
-					_pos = t.pos();
-					_type = t.type();
+					_pos = t.Pos();
+					_type = t.Type();
 					delete [] _id;
-					_id = Mary::Support::mystrndup( t.id(), wcslen( t.id() ) );
+					_id = Support::Mystrndup( t.Id(), wcslen( t.Id() ) );
 				}
 				return *this;
 			}
 
 			~Token(){ delete[] _id; }
 
-			wchar_t const*      id() const { return _id; }
-			Support::Position	pos() const { return _pos; }
-			TokenType			type() const { return _type; }
+			wchar_t const*      Id() const { return _id; }
+			Support::Position	Pos() const { return _pos; }
+			TokenType			Type() const { return _type; }
 
-			typedef std::unordered_map< wchar_t const *, TokenType, Mary::Support::WStrHash, 
-				Mary::Support::WStrEqual> LookupTable;
+			typedef std::unordered_map< wchar_t const *, TokenType, Support::WStrHash, 
+				Support::WStrEqual> LookupTable;
 
 			static LookupTable lookup_table;
-			static void initLookupTable();
+			static void InitLookupTable();
 
 			friend std::wostream & operator<<( std::wostream & os, Token const & t ){
 				return os << L"ID: '" << t.id() << L"', " << t.pos() << L" : " 
 					<< static_cast<int>( t.type() );
 			}
 		private:
-			wchar_t const *				getName( TokenType tt ) const;
+			wchar_t const *				GetName( TokenType tt ) const;
 			wchar_t					    *_id;
 			Support::Position			_pos;
 			TokenType					_type;
 		}; // struct Token
 	} // namespace Lexer
-} //namespace Mary
+} //namespace MaryLang

@@ -4,7 +4,7 @@
 #include "List.hpp"
 #include "Expression.hpp"
 
-namespace Mary
+namespace MaryLang
 {
     // forward declarations
     namespace CodeGeneration
@@ -27,7 +27,7 @@ namespace Mary
             Statement( Lexer::Token const & token ): Locatable( token ) {}
             virtual ~Statement()  {}
             
-            virtual void Emit( CodeGeneration::CodeGen & cfg ) const = 0;
+            //virtual void Emit( CodeGeneration::CodeGen & cfg ) const = 0;
             virtual void Analyze() const = 0; //all analysis should be defined in the Semantic Analyzer directory
         }; // struct Statement
         
@@ -35,7 +35,9 @@ namespace Mary
         {
             IllegalStatement( Lexer::Token & token ): Statement( token ) {}
             ~IllegalStatement(){}
-            virtual void Emit( CodeGeneration::CodeGen & cfg ) const;
+
+			void Analyze() const;
+            //virtual void Emit( CodeGeneration::CodeGen & cfg ) const;
         };
         
         struct CaseOfStatement: Statement
@@ -56,18 +58,22 @@ namespace Mary
         
         struct IfStatement: Statement
         {
-            IfStatement( Lexer::Token const & token, Expression const * const conditionalExpression,
+            IfStatement( Lexer::Token const & token, 
+				Expression const * const conditionalExpression,
+				Expression const * const expr,
 				Statement const * const statementBody, 
                 Statement const * const elseBody = nullptr )
-				: Statement( token ), condExpressionPart( conditionalExpression ), 
+				: Statement( token ), 
+				condExpressionPart( conditionalExpression ), expression( expr ),
 				thenStatementPart( statementBody ), elseStatementPart( elseBody )
             {
             }
             ~IfStatement() { }
             void Analyze() const;
-            void Emit( CodeGeneration::CodeGen & cfg ) const = 0;
+            //void Emit( CodeGeneration::CodeGen & cfg ) const = 0;
         private:
             Expression const * const condExpressionPart;
+			Expression const * const expression;
             Statement const  * const thenStatementPart;
             Statement const  * const elseStatementPart;
         }; // struct IfStatement
@@ -153,17 +159,6 @@ namespace Mary
             Expression  const * const expression;
         };
         
-        struct ForEachIn: ForInStatement
-        {
-            ForEachIn( Lexer::Token const & token, Declaration const * const declaration,
-                Expression const * const expr, Statement const * const statement )
-            :   ForInStatement( token, declaration, expr, statement )
-            {
-            }
-            ~ForEachIn() {}
-            void Analyze() const final;
-        };
-        
         struct LabelStatement: Statement
         {
             LabelStatement( Lexer::Token const & token, Statement const * const statement )
@@ -188,6 +183,20 @@ namespace Mary
             Expression const * const expression;
         };
         
+		struct CheckAmongStatement: Statement
+		{
+			CheckAmongStatement( Token const & token, Expression const * const expr,
+				Statement const * const body )
+				: Statement( token ), conditional_expression( expr ),
+				statement_body( body )
+			{
+			}
+			~CheckAmongStatement() {}
+			void Analyze() const;
+
+			Expression const * const conditional_expression;
+			Statement  const * const statement_body;
+		};
         struct ContinueStatement: Statement
         {
             ContinueStatement( Lexer::Token const & token ): Statement( token ){}
@@ -202,21 +211,10 @@ namespace Mary
             void Analyze() const final;
         };
         
-        struct SourceElements: List< Statement >
+		struct CompoundStatement: Statement, List<Statement>
         {
-            SourceElements( std::vector<Statement const *> const & statements )
-				:   List( statements )
-            {
-            }
-            virtual ~SourceElements() {}
-            virtual void Analyze() const = 0;
-        };
-        
-        struct CompoundStatement: Statement, SourceElements
-        {
-            CompoundStatement( Lexer::Token const & token, 
-                std::vector<Statement const * const> const & statements )
-            :   Statement( token ), SourceElements( statements )
+            CompoundStatement( Lexer::Token const & token )
+            :   Statement( token ), List()
             {
             }
             ~CompoundStatement(){}
@@ -224,4 +222,4 @@ namespace Mary
 			void emit( CodeGeneration::CodeGen & codegen );
         };
     } // namespace AbstractSyntaxTree
-}// namespace Mary
+}// namespace MaryLang

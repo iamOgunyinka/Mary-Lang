@@ -10,7 +10,7 @@
 #define DIAG_WARNING     "\033[1;35m"
 #define DIAG_ERROR       "\033[1;31m"
 
-namespace Mary
+namespace MaryLang
 {
 	namespace Support
 	{
@@ -19,26 +19,26 @@ namespace Mary
 			Diagnostic( const bool color ): color_(color), numErrors_( 0 )
 			{ }
 
-			inline void note( Position const & pos, wchar_t const * note ) {
+			inline void Note( Position const & pos, wchar_t const * note ) {
 				print_pos( pos, Kind::K_Note, note );
 			}
 
-			inline void warning( Position const & pos, wchar_t const * w ) {
+			inline void Warning( Position const & pos, wchar_t const * w ) {
 				print_pos( pos, Kind::K_Warning, w );
 			}
 
-			inline void error( wchar_t const * what )
+			inline void Error( wchar_t const * what )
 			{
 				if ( color_ ) std::cerr << DIAG_BOLD;
 				std::cerr << what << std::endl;
 				if ( color_ ) std::cerr << DIAG_RESET;
 			}
-			inline void error( Position const & pos, wchar_t const * m ) {
+			inline void Error( Position const & pos, wchar_t const * m ) {
 				++numErrors_;
 				print_pos( pos, Kind::K_Error, m );
 			}
 
-			unsigned hasError() {
+			unsigned HasError() {
 				auto tmp = numErrors_;
 				numErrors_ = 0;
 				return tmp;
@@ -54,7 +54,7 @@ namespace Mary
 				K_Error
 			};
 
-			void print_pos( const Position pos, const Kind kind, wchar_t const * what ) {
+			void PrintPos( const Position pos, const Kind kind, wchar_t const * what ) {
 				switch ( kind ) {
 				case Kind::K_Note:
 					if (color_) { std::cerr << DIAG_NOTE;    } 
@@ -71,7 +71,7 @@ namespace Mary
 				}
 				if ( color_) std::cerr << DIAG_BOLD;
 				std::wcerr << what << L" on ";
-				pos.dump();
+				pos.Dump();
 				if (color_ ) std::cerr << DIAG_RESET;
 				
 				if (color_) std::cerr << DIAG_RESET;
@@ -81,7 +81,7 @@ namespace Mary
 		static void ReportError( wchar_t const * what )
 		{
 			static Diagnostic diag = true;
-			diag.error( what );
+			diag.Error( what );
 		}
 #undef DIAG_RESET
 #undef DIAG_BOLD
@@ -89,4 +89,4 @@ namespace Mary
 #undef DIAG_WARNING
 #undef DIAG_ERROR
 	} // namespace Support
-} // namespace Mary
+} // namespace MaryLang

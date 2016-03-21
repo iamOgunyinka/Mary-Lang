@@ -8,7 +8,7 @@
 #include <clocale>
 #endif
 
-namespace Lexer = Mary::Lexer;
+namespace Lexer = MaryLang::Lexer;
 
 int main( int argc, char **argv )
 {
@@ -21,13 +21,13 @@ int main( int argc, char **argv )
 	if( argc < 2 ) return -1;
 
 	Lexer::Scanner scanner( argv[1] );
-	Lexer::Token token = scanner.getNextToken();
-	while( token.type() != Lexer::TokenType::TK_EOF )
+	Lexer::Token token = scanner.GetNextToken();
+	while( token.Type() != Lexer::TokenType::TK_EOF )
 	{
-		if( token.type() != Lexer::TokenType::TK_INVALID )
+		if( token.Type() != Lexer::TokenType::TK_INVALID )
 			std::wcout << token << std::endl;
 		
-		token = scanner.getNextToken();
+		token = scanner.GetNextToken();
 	}
 	return 0;
 }

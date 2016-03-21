@@ -13,7 +13,7 @@
 #define isHexNumber(c) ( ( c >= L'A' && c <= L'F' ) || ( c >= L'a' && c <= L'f' ) || ( c >= L'0' && c <= L'9' ))
 #define isOctalNumber(c) ( c >= L'0' && c <= L'7' )
 
-namespace Mary
+namespace MaryLang
 {
 	namespace Lexer
 	{
@@ -23,8 +23,8 @@ namespace Mary
 			marker_position( 0 ), begin_mark( 0 ),
 			buffer_size( 0 )
 		{
-			if( setNewFileName( filename ) ){
-				Token::initLookupTable();
+			if( SetNewFileName( filename ) ){
+				Token::InitLookupTable();
 			} else {
 				exit( -1 );
 			}
@@ -35,7 +35,7 @@ namespace Mary
 			delete []buffer;
 		}
 
-		void Scanner::nextChar()
+		void Scanner::NextChar()
 		{
 			if( marker_position == buffer_size ) {
 				current_token = L'\0';
@@ -53,7 +53,7 @@ namespace Mary
 			++marker_position;
 		}
 
-		bool Scanner::setNewFileName( char const * filename )
+		bool Scanner::SetNewFileName( char const * filename )
 		{
 			char* buffer;
 			std::ifstream in( filename, std::ios_base::in | std::ios_base::binary 
@@ -108,14 +108,14 @@ namespace Mary
 			return true;
 		}
 
-		Token Scanner::getNextToken()
+		Token Scanner::GetNextToken()
 		{
 			for( ; ; )
 			{
 				if( EOF != current_token 
 					&& ( std::iswalpha( current_token ) || current_token == L'_' ) )
 				{
-					return identifierOrKeywordToken();
+					return IdentifierOrKeywordToken();
 				} else {
 					switch ( current_token )
 					{
@@ -128,7 +128,7 @@ namespace Mary
 					case L'\n':
 					case L'\v':
 					case L'\f':
-						nextChar();
+						NextChar();
 						continue;
 
 					case L'0':
@@ -141,201 +141,201 @@ namespace Mary
 					case L'7':
 					case L'8':
 					case L'9':
-						return getNumberToken();
+						return GetNumberToken();
 
 					case L'"':
 					case L'\'':
-						return getStringLiteralToken();
+						return GetStringLiteralToken();
 					case L'.':
-						nextChar();
+						NextChar();
 						return Token( pos, TokenType::TK_DOT );
 					case L'+':
 						{
 							Support::Position newPos( pos );
-							nextChar();
+							NextChar();
 							switch( current_token )
 							{
-							case L'+': nextChar(); return Token( newPos, TokenType::TK_INCREMENT );
-							case L'=': nextChar(); return Token( newPos, TokenType::TK_ADDEQL );
+							case L'+': NextChar(); return Token( newPos, TokenType::TK_INCREMENT );
+							case L'=': NextChar(); return Token( newPos, TokenType::TK_ADDEQL );
 							default: return Token( newPos, TokenType::TK_ADD );
 							}
 						}
 					case L'-':
 						{
 							Support::Position newPos( pos );
-							nextChar();
+							NextChar();
 							switch( current_token )
 							{
-							case L'-': nextChar(); return Token( newPos, TokenType::TK_DECREMENT );
-							case L'=': nextChar(); return Token( newPos, TokenType::TK_SUBEQL );
+							case L'-': NextChar(); return Token( newPos, TokenType::TK_DECREMENT );
+							case L'=': NextChar(); return Token( newPos, TokenType::TK_SUBEQL );
 							default: return Token( newPos, TokenType::TK_SUB );
 							}
 						}
 					case L'*':
 						{
 							Support::Position newPos( pos );
-							nextChar();
+							NextChar();
 							switch( current_token )
 							{
-							case L'=': nextChar(); return Token( newPos, TokenType::TK_MULEQL );
+							case L'=': NextChar(); return Token( newPos, TokenType::TK_MULEQL );
 							default: return Token( newPos, TokenType::TK_MUL );
 							}
 						}
 					case L'/':
 						{
 							Support::Position newPos( pos );
-							nextChar();
+							NextChar();
 							switch( current_token )
 							{
 							case L'=':
-								nextChar();
+								NextChar();
 								return Token( newPos, TokenType::TK_DIVEQL );
 							case L'*': 
 								{
-									nextChar();
+									NextChar();
 									while( current_token != EOF && 
 										!( current_token == L'*' && buffer[ marker_position ] == L'/' )){
-											nextChar();
+											NextChar();
 									}
 									if( current_token == EOF ) {
 										throw std::runtime_error( "Unterminated comment" );
 									}
-									nextChar();
-									nextChar();
+									NextChar();
+									NextChar();
 									continue;
 								}
 							case L'/':
-								while( current_token != L'\n' ) nextChar();
+								while( current_token != L'\n' ) NextChar();
 								continue;
 							default:
 								return Token( newPos, TokenType::TK_DIV );
 							}
 						}
 					case L'&':
-						nextChar();
+						NextChar();
 						switch( current_token ){
-						case L'&': nextChar(); return Token( pos, TokenType::TK_LAND );
-						case L'=': nextChar(); return Token( pos, TokenType::TK_ANDEQL );
+						case L'&': NextChar(); return Token( pos, TokenType::TK_LAND );
+						case L'=': NextChar(); return Token( pos, TokenType::TK_ANDEQL );
 						default: return Token( pos, TokenType::TK_AND );
 						}
 					case L'|':
-						nextChar();
+						NextChar();
 						switch( current_token ){
-						case L'|': nextChar(); return Token( pos, TokenType::TK_LOR );
-						case L'=': nextChar(); return Token( pos, TokenType::TK_OREQL );
+						case L'|': NextChar(); return Token( pos, TokenType::TK_LOR );
+						case L'=': NextChar(); return Token( pos, TokenType::TK_OREQL );
 						default: return Token( pos, TokenType::TK_OR );
 						}
 					case L'^': 
-						nextChar();
+						NextChar();
 						switch( current_token )
 						{
-						case L'=': nextChar(); return Token( pos, TokenType::TK_XORASSIGN );
+						case L'=': NextChar(); return Token( pos, TokenType::TK_XORASSIGN );
 						default:   return Token( pos, TokenType::TK_XOR );
 						}
-					case L'~': nextChar(); return Token( pos, TokenType::TK_NEG );
+					case L'~': NextChar(); return Token( pos, TokenType::TK_NEG );
 					case L'!':
-						nextChar();
+						NextChar();
 						switch( current_token ){
-						case L'=': nextChar(); return Token( pos, TokenType::TK_NOTEQL );
+						case L'=': NextChar(); return Token( pos, TokenType::TK_NOTEQL );
 						default: return Token( pos, TokenType::TK_NOT );
 						}
 					case L'<':
-						nextChar();
+						NextChar();
 						switch ( current_token )
 						{
 						case L'<':
-							nextChar(); 
+							NextChar(); 
 							switch( current_token ){
-							case L'=': nextChar(); return Token( pos, TokenType::TK_LSASSIGN );
+							case L'=': NextChar(); return Token( pos, TokenType::TK_LSASSIGN );
 							default: return Token( pos, TokenType::TK_LSHIFT );
 							}
-						case L'=': nextChar(); return Token( pos, TokenType::TK_LEQL );
+						case L'=': NextChar(); return Token( pos, TokenType::TK_LEQL );
 						default: return Token( pos, TokenType::TK_LESS );
 						}
 					case L'>':
-						nextChar();
+						NextChar();
 						switch ( current_token )
 						{
 						case L'>': 
-							nextChar(); 
+							NextChar(); 
 							switch( current_token )
 							{
-							case L'=': nextChar(); return Token( pos, TokenType::TK_RSASSIGN );
+							case L'=': NextChar(); return Token( pos, TokenType::TK_RSASSIGN );
 							default: return Token( pos, TokenType::TK_RSHIFT );
 							}
-						case L'=': nextChar(); return Token( pos, TokenType::TK_GEQL );
+						case L'=': NextChar(); return Token( pos, TokenType::TK_GEQL );
 						default: return Token( pos, TokenType::TK_GREATER );
 						}
 					case L'%':
-						nextChar();
+						NextChar();
 						switch ( current_token )
 						{
-						case L'=': nextChar(); return Token( pos, TokenType::TK_MODASSIGN );
+						case L'=': NextChar(); return Token( pos, TokenType::TK_MODASSIGN );
 						default: return Token( pos, TokenType::TK_MODULO );
 						}
 					case L'(':
-						nextChar(); return Token( pos, TokenType::TK_LPAREN );
+						NextChar(); return Token( pos, TokenType::TK_LPAREN );
 					case L')':
-						nextChar(); return Token( pos, TokenType::TK_RPAREN );
+						NextChar(); return Token( pos, TokenType::TK_RPAREN );
 					case L'[':
-						nextChar(); return Token( pos, TokenType::TK_LBRACKET );
+						NextChar(); return Token( pos, TokenType::TK_LBRACKET );
 					case L']':
-						nextChar(); return Token( pos, TokenType::TK_RBRACKET );
+						NextChar(); return Token( pos, TokenType::TK_RBRACKET );
 					case L'{':
-						nextChar(); return Token( pos, TokenType::TK_LBRACE );
+						NextChar(); return Token( pos, TokenType::TK_LBRACE );
 					case L'}':
-						nextChar(); return Token( pos, TokenType::TK_RBRACE );
+						NextChar(); return Token( pos, TokenType::TK_RBRACE );
 					case L'=':
-						nextChar();
+						NextChar();
 						switch ( current_token )
 						{
 						case L'=':
-							nextChar();
+							NextChar();
 							return Token( pos, TokenType::TK_EQL );
 						default: return Token( pos, TokenType::TK_ASSIGN );
 						}
 					case L'@':
-						nextChar();
+						NextChar();
 						return Token( pos, TokenType::TK_AT );
 					case L':':
-						nextChar();
+						NextChar();
 						return Token( pos, TokenType::TK_COLON );
 					case L';':
-						nextChar();
+						NextChar();
 						return Token( pos, TokenType::TK_SEMICOLON );
 					case L',':
-						nextChar();
+						NextChar();
 						return Token( pos, TokenType::TK_COMMA );
 					default:
-						nextChar();
-						diag.warning( pos, L"Invalid character" );
+						NextChar();
+						diag.Warning( pos, L"Invalid character" );
 						return Token( pos, TokenType::TK_INVALID );
 					}
 				}
 			}
 		} // Scanner::getNextToken()
 
-		Token Scanner::identifierOrKeywordToken()
+		Token Scanner::IdentifierOrKeywordToken()
 		{
 			begin_mark = marker_position - 1;
 			Support::Position newPos = pos;
-			nextChar();
+			NextChar();
 			while( ( std::iswalnum( current_token ) || current_token == L'_' ) 
 				&& !( current_token == EOF ) )
 			{ 
-				nextChar();
+				NextChar();
 			}
 
 			if( current_token == EOF ){
 				return Token( newPos, TokenType::TK_EOF );
 			}
-			return identifierOrKeywordToken( newPos );
+			return IdentifierOrKeywordToken( newPos );
 		} // Scanner::identifierOrKeyword
 
-		Token Scanner::identifierOrKeywordToken( Support::Position pos )
+		Token Scanner::IdentifierOrKeywordToken( Support::Position pos )
 		{
 			auto wsize = marker_position - begin_mark;
-			wchar_t *tk = Support::mystrndup( &buffer[begin_mark], wsize - 1 );
+			wchar_t *tk = Support::Mystrndup( &buffer[begin_mark], wsize - 1 );
 			if( tk == nullptr ){
 				std::wcerr << "Allocation/Copy failed" << std::endl;
 				exit( 1 );
@@ -345,39 +345,39 @@ namespace Mary
 			return Token( tk, pos, type );
 		}
 
-		Token Scanner::getIntegerToken()
+		Token Scanner::GetIntegerToken()
 		{
 			// gather as many digits as we can get. Are we done?
 			bool isDecimal = false;
 			do {
-				nextChar();
+				NextChar();
 			} while( std::iswdigit( current_token ) );
 
 			// OK! Did we hit a decimal point?
 			if( current_token == L'.' ){
 				isDecimal = true;
-				nextChar();
+				NextChar();
 			} else if( current_token == L'E' || current_token == L'e' ) {
 				// Or perhaps an exponential sign?
-				nextChar();
+				NextChar();
 				// with a positiive or negative sign?
 				if( ( current_token == L'+' || current_token == L'-' )
 					&& std::iswdigit( buffer[marker_position] ) )
 				{
-					nextChar();
+					NextChar();
 				}
 			}
 			//lets gather the rest of the circle member and return home.
 			while( std::iswdigit( current_token )){
-				nextChar();
+				NextChar();
 			}
 
-			return Token( Support::mystrndup( 
+			return Token( Support::Mystrndup( 
 				&buffer[begin_mark], ( marker_position - begin_mark ) - 1 ),
 				pos, ( isDecimal ? TokenType::TK_DOUBLE : TokenType::TK_INT ) );
 		}
 
-		Token Scanner::getNumberToken()
+		Token Scanner::GetNumberToken()
 		{
 			Support::Position newPos = pos;
 			begin_mark = marker_position - 1;
@@ -385,75 +385,75 @@ namespace Mary
 			if( current_token == L'0' && 
 				( next_char_lookahead == L'x' || next_char_lookahead == L'X' ) )
 			{
-				nextChar();
+				NextChar();
 				do {
-					nextChar();
+					NextChar();
 				} while( current_token != EOF && isHexNumber( current_token ));
 
 				if( marker_position == EOF ){
-					diag.warning( newPos, L"End of file encountered" );
+					diag.Warning( newPos, L"End of file encountered" );
 				}
-				return Token( Support::mystrndup(
+				return Token( Support::Mystrndup(
 					&buffer[begin_mark], ( marker_position - begin_mark ) - 1 ), 
 					newPos, TokenType::TK_INT );
 			} else if( current_token == L'0' && isOctalNumber( next_char_lookahead ) ) {
 				do {
-					nextChar();
+					NextChar();
 				} while( current_token != EOF && isOctalNumber( current_token ) );
-				return Token( Support::mystrndup( 
+				return Token( Support::Mystrndup( 
 					&buffer[begin_mark], ( marker_position - begin_mark ) - 1 ), 
 					newPos, TokenType::TK_INT );
 			} else if( current_token == L'0' && 
 				( next_char_lookahead == L'b' || next_char_lookahead == L'B' )) 
 			{
-				nextChar();
+				NextChar();
 				do {
-					nextChar();
+					NextChar();
 				} while( current_token == L'0' || current_token == L'1' );
 
 				if( std::iswdigit( current_token ) ){
-					diag.warning( pos, L"Invalid binary digit" );
-					while( std::iswdigit( current_token ) ) nextChar();
+					diag.Warning( pos, L"Invalid binary digit" );
+					while( std::iswdigit( current_token ) ) NextChar();
 				}
-				return Token( Support::mystrndup( 
+				return Token( Support::Mystrndup( 
 					&buffer[begin_mark], ( marker_position - begin_mark ) - 1 ),
 					newPos, TokenType::TK_INT );
 			}
 
-			return getIntegerToken();
+			return GetIntegerToken();
 		} // Scanner::getNumber()
 
 		// TO-DO: Recongize string interpolation.
-		Token Scanner::getStringLiteralToken()
+		Token Scanner::GetStringLiteralToken()
 		{
 			Support::Position newPos ( pos );
 			std::wstring buf;
 			int const delimeter = current_token;
-			nextChar();
+			NextChar();
 
 			bool hasError = false, strInterpolOpen = false, strInterpolAvailable = false;
 			for( ; ; ){
 				if( current_token == EOF || current_token == L'\n' ){
-					diag.error( pos, L"Expected a delimeter in string." );
+					diag.Error( pos, L"Expected a delimeter in string." );
 					return Token( pos, TokenType::TK_INVALID );
 					marker_position = buffer_size;
 				}
 
 				if( current_token == delimeter ){
-					nextChar();
+					NextChar();
 					break;
 				} else if( current_token == L'\\' ) {
 					wchar_t peek = buffer[marker_position];
 					if( peek == delimeter ){
-						nextChar();
+						NextChar();
 					}
 				} else if( current_token == L'#' ){
 					buf.push_back( current_token );
-					nextChar();
+					NextChar();
 					if( current_token == L'{' ){ 
 						buf.push_back( current_token );
 						strInterpolOpen = true;
-						nextChar();
+						NextChar();
 					}
 					continue;
 				} else if( current_token == L'}' && strInterpolOpen ){
@@ -461,11 +461,11 @@ namespace Mary
 					strInterpolAvailable = true;
 				}
 				buf.push_back( current_token );
-				nextChar();
+				NextChar();
 			}
-			return Token( Support::mystrndup( buf.c_str(), buf.size() ),
+			return Token( Support::Mystrndup( buf.c_str(), buf.size() ),
 				newPos, 
 				( strInterpolAvailable ? TokenType::TK_STRLITINTERPOL : TokenType::TK_STRLITERAL ) );
 		}
 	} // namespace Lexer
-} // namespace Mary
+} // namespace MaryLang

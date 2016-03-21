@@ -63,16 +63,19 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Mary.cpp" />
+    <ClCompile Include="Parser\Parser.cpp" />
     <ClCompile Include="Scanner\Scanner.cpp" />
     <ClCompile Include="Scanner\tokens.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="AbstractSyntaxTree\AST.hpp" />
+    <ClInclude Include="AbstractSyntaxTree\ASTFactory.hpp" />
     <ClInclude Include="AbstractSyntaxTree\Declaration.hpp" />
     <ClInclude Include="AbstractSyntaxTree\Expression.hpp" />
     <ClInclude Include="AbstractSyntaxTree\List.hpp" />
     <ClInclude Include="AbstractSyntaxTree\Statement.hpp" />
     <ClInclude Include="AbstractSyntaxTree\Types.hpp" />
+    <ClInclude Include="Parser\Parser.hpp" />
     <ClInclude Include="Scanner\Scanner.hpp" />
     <ClInclude Include="Scanner\tokens.hpp" />
     <ClInclude Include="Utils\Diagnostics.hpp" />

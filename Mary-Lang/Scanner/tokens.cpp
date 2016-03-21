@@ -1,19 +1,21 @@
 #include "tokens.hpp"
 
-namespace Mary
+namespace MaryLang
 {
 	namespace Lexer
 	{
 		Token::LookupTable Token::lookup_table;
 		
-		void Token::initLookupTable()
+		void Token::InitLookupTable()
 		{
 			lookup_table.insert( std::make_pair( L"var",	TokenType::TK_VAR ) );
 			lookup_table.insert( std::make_pair( L"for",	TokenType::TK_FOR ) );
 			lookup_table.insert( std::make_pair( L"do",		TokenType::TK_DO ) );
 			lookup_table.insert( std::make_pair( L"while",	TokenType::TK_WHILE ) );
 			lookup_table.insert( std::make_pair( L"if",		TokenType::TK_IF ) );
+			lookup_table.insert( std::make_pair( L"isit",	TokenType::TK_ISIT ) );
 			lookup_table.insert( std::make_pair( L"else",	TokenType::TK_ELSE ) );
+			lookup_table.insert( std::make_pair( L"function", TokenType::TK_FUNCTION ) );
 			lookup_table.insert( std::make_pair( L"among",		TokenType::TK_AMONG ) );
 			lookup_table.insert( std::make_pair( L"check",	TokenType::TK_CHECK ) );
 			lookup_table.insert( std::make_pair( L"continue", TokenType::TK_CONTINUE ) );
@@ -33,7 +35,7 @@ namespace Mary
 			lookup_table.insert( std::make_pair( L"construct", TokenType::TK_CONSTRUCT ) );
 		} // Token::initLookupTable
 
-		wchar_t const* Token::getName( TokenType tt ) const
+		wchar_t const* Token::GetName( TokenType tt ) const
 		{
 			switch( tt )
 			{
@@ -86,4 +88,4 @@ namespace Mary
 			}
 		}
 	} // namespace Lexer
-} // namespace Mary
+} // namespace MaryLang

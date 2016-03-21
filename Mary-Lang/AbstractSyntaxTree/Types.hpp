@@ -1,6 +1,6 @@
 #pragma once
 
-namespace Mary
+namespace MaryLang
 {
     namespace AbstractSyntaxTree
     {
