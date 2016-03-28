@@ -53,6 +53,8 @@ namespace MaryLang
 			TK_WHILE,
 			TK_IF,
 			TK_ELSE,
+			TK_NAMESPACE,
+			TK_VIRTUAL,
 			TK_AMONG,
 			TK_CHECK,
 			TK_ISIT, // is it?
@@ -79,6 +81,7 @@ namespace MaryLang
 			TK_DOT,
 			TK_INCREMENT, // ++
 			TK_DECREMENT, // --
+			TK_ARROW, // ->
 			TK_AND, // &
 			TK_ANDEQL, // &=
 			TK_LAND, // Logical &&

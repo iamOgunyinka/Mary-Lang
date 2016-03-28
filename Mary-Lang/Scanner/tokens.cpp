@@ -32,6 +32,8 @@ namespace MaryLang
 			lookup_table.insert( std::make_pair( L"return", TokenType::TK_RETURN ) );
 			lookup_table.insert( std::make_pair( L"class",	TokenType::TK_CLASS ) );
 			lookup_table.insert( std::make_pair( L"extends", TokenType::TK_EXTENDS ) );
+			lookup_table.insert( std::make_pair( L"namespace", TokenType::TK_NAMESPACE ) );
+			lookup_table.insert( std::make_pair( L"virtual", TokenType::TK_VIRTUAL ) );
 			lookup_table.insert( std::make_pair( L"construct", TokenType::TK_CONSTRUCT ) );
 		} // Token::initLookupTable
 
@@ -43,6 +45,7 @@ namespace MaryLang
 			case TokenType::TK_ADDEQL:		return L"+=";
 			case TokenType::TK_AND:			return L"&";
 			case TokenType::TK_ANDEQL:		return L"&=";
+			case TokenType::TK_ARROW:		return L"->";
 			case TokenType::TK_ASSIGN:		return L"=";
 			case TokenType::TK_AT:  		return L"@";
 			case TokenType::TK_COLON:		return L":";

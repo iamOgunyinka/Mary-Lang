@@ -167,6 +167,7 @@ namespace MaryLang
 							switch( current_token )
 							{
 							case L'-': NextChar(); return Token( newPos, TokenType::TK_DECREMENT );
+							case L'>': NextChar(); return Token( newPos, TokenType::TK_ARROW );
 							case L'=': NextChar(); return Token( newPos, TokenType::TK_SUBEQL );
 							default: return Token( newPos, TokenType::TK_SUB );
 							}

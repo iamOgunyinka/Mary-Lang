@@ -77,6 +77,7 @@ DeclarationStatement    ::=
     |   EnumDeclaration
     |   VariableDeclaration
     |   FunctionDeclaration
+    |   NamespaceDeclaration
 ;
 
 VariableDeclaration     ::=
@@ -87,8 +88,13 @@ VariableDeclaration     ::=
 TypeSpecifier           ::=
         BuiltinTypes
     |   "var"
-    |   "Identifier"
+    |   QualifiedId
     |   "decltype" "(" Expression ")"
+;
+
+QualifiedId             ::=
+        "Identifier".QualifiedId
+    |   "Identifier"
 ;
 
 TypeQualifier           ::=
@@ -113,6 +119,10 @@ Decl                   ::=
 OptionalInitalizer      ::=
         "=" AssignmentExpression
     |   Epsilon
+;
+
+NamespaceDeclaration    ::=
+        "namespace" [ "Identfier" ] CompoundStatement
 ;
 
 EnumDeclaration         ::=
@@ -156,7 +166,12 @@ ClassBodyList           ::=
 ;
 
 FunctionDeclaration         ::=
-        "function" "Identifier" "(" [ ParameterList ] ")" [ ":" TypeSpecifier ] CompoundStatement
+        [ FunctionSpecifier ] "function" "Identifier" "(" [ ParameterList ] ")" [ "final" | "override" ] [ "->" TypeSpecifier ] CompoundStatement
+;
+
+FunctionSpecifier           ::=
+        "virtual"
+    |   "static"
 ;
 
 ParameterList               ::=
