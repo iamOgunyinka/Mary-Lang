@@ -38,7 +38,8 @@ namespace MaryLang
 
 		struct ExpressionList: Expression
 		{
-			ExpressionList( Token const & token ): Expression( token )
+			ExpressionList( Token const & token, std::vector<std::unique_ptr<Expression>> && expressions )
+				: Expression( token ), expressions( std::move( expressions ) )
 			{
 			}
 			~ExpressionList() {}

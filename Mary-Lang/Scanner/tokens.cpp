@@ -9,6 +9,9 @@ namespace MaryLang
 		void Token::InitLookupTable()
 		{
 			lookup_table.insert( std::make_pair( L"var",	TokenType::TK_VAR ) );
+			lookup_table.insert( std::make_pair( L"private", TokenType::TK_PRIVATE ) );
+			lookup_table.insert( std::make_pair( L"public",	TokenType::TK_PUBLIC ) );
+			lookup_table.insert( std::make_pair( L"protected",	TokenType::TK_PROTECTED ) );
 			lookup_table.insert( std::make_pair( L"for",	TokenType::TK_FOR ) );
 			lookup_table.insert( std::make_pair( L"do",		TokenType::TK_DO ) );
 			lookup_table.insert( std::make_pair( L"while",	TokenType::TK_WHILE ) );
@@ -55,6 +58,7 @@ namespace MaryLang
 			case TokenType::TK_DIVEQL:		return L"/=";
 			case TokenType::TK_DOT:			return L".";
 			case TokenType::TK_EQL:			return L"==";
+			case TokenType::TK_EXP:			return L"**";
 			case TokenType::TK_GEQL:		return L">=";
 			case TokenType::TK_GREATER:		return L">";
 			case TokenType::TK_INCREMENT:	return L"++";

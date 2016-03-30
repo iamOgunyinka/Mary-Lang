@@ -55,6 +55,9 @@ namespace MaryLang
 			TK_ELSE,
 			TK_NAMESPACE,
 			TK_VIRTUAL,
+			TK_PRIVATE,
+			TK_PUBLIC,
+			TK_PROTECTED,
 			TK_AMONG,
 			TK_CHECK,
 			TK_ISIT, // is it?
@@ -104,6 +107,7 @@ namespace MaryLang
 			TK_ADD,    // +
 			TK_SUB,    // -
 			TK_MUL,    // *
+			TK_EXP,    // **
 			TK_DIV,    // /
 			TK_ADDEQL, // +=
 			TK_SUBEQL, // -=

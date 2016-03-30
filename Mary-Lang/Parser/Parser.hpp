@@ -37,16 +37,28 @@ namespace MaryLang
 			Scanner&					lexer;
 			std::unique_ptr<Error>		error_messages;
 
+			enum class Associativity
+			{
+				RIGHT_ASSOC,
+				LEFT_ASSOC,
+				NONE_ASSOC
+			};
+
+			typedef std::pair<int, Associativity> PrecAssocPair;
+			PrecAssocPair GetPrecedence( TokenType tt );
+			
 			void Accept( TokenType tt );
 			void Expect( TokenType tt );
 			void NextToken();
 			void ParseSourceElement();
 			void ParseImports();
 			bool IsBuiltInType( TokenType tt );
-			
+
 			std::shared_ptr<ParsedProgram> ParseProgram();
 			std::unique_ptr<Expression> ParseAssignmentExpression();
 			std::unique_ptr<Expression> ParseExpression();
+			std::unique_ptr<Expression> ParseConditionalExpression();
+			std::unique_ptr<Expression> ParseBinaryExpression();
 
 			std::unique_ptr<Statement> ParseCompoundStatement();
 			std::unique_ptr<Statement> ParseStatement();
@@ -55,11 +67,14 @@ namespace MaryLang
 			std::unique_ptr<Statement> ParseConditionalStatement();
 			std::unique_ptr<Statement> ParseJumpStatement();
 			std::unique_ptr<Statement> ParseIterativeStatement();
-			std::unique_ptr<Statement> ParseDeclarativeStatement();
+			std::unique_ptr<Statement> ParseDeclarationStatement();
+			std::unique_ptr<Statement> ParseExpressionStatement();
 
 			std::unique_ptr<Statement> ParseWhileStatement();
 			std::unique_ptr<Statement> ParseForStatement();
 			std::unique_ptr<Statement> ParseDoWhileStatement();
+
+			std::unique_ptr<Declaration> ParseDeclaration();
 			std::unique_ptr<Declaration> ParseEnumDeclaration();
 			std::unique_ptr<Declaration> ParseClassDeclaration();
 			std::unique_ptr<Declaration> ParseFunctionDeclaration();

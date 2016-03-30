@@ -12,7 +12,7 @@ namespace MaryLang
         struct List
         {
             List( ): _list() {}
-			List( std::vector<std::unique_ptr<T>> const & list ): _list( list ) {}
+			List( std::vector<std::unique_ptr<T>> && list ): _list( std::move( list ) ) {}
             ~List() {}
             
 			inline void Append( std::unique_ptr<T> t )

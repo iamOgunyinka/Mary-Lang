@@ -179,6 +179,7 @@ namespace MaryLang
 							switch( current_token )
 							{
 							case L'=': NextChar(); return Token( newPos, TokenType::TK_MULEQL );
+							case L'*': NextChar(); return Token( newPos, TokenType::TK_EXP );
 							default: return Token( newPos, TokenType::TK_MUL );
 							}
 						}

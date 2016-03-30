@@ -23,7 +23,7 @@ CompoundStatement       ::=
 ;
 
 LabelledStatement       ::=
-    |   "Identifier" ":" Statement
+    |   "isit" "Identifier" ":"
 ;
 
 Literal                 ::=
@@ -38,7 +38,7 @@ BooleanLiteral          ::=
 ;
 
 Lambda                  ::=
-        "@" [ "(" [ ParameterList ] ")" [ ":" TypeSpecifier ] ] CompoundStatement
+        "@" [ "(" [ ParameterList ] ")" [ "->" TypeSpecifier ] ] CompoundStatement
 ;
 
 NumericLiteral          ::=

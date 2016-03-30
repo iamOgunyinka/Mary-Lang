@@ -111,7 +111,14 @@ namespace MaryLang
 				: Declaration( token )
 			{
 			}
+			void Append( std::unique_ptr<Token> access_specifier, std::unique_ptr<Declaration> declaration )
+			{
+				class_declarations.Append( std::move( declaration ) );
+			}
 			ANALYZE_DUMP_DECL;
+
+		private:
+			List<Declaration>  class_declarations;
 		};
 
 		struct Enumerator

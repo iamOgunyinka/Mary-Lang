@@ -93,6 +93,40 @@ namespace MaryLang
 			{
 				return make_unique<LeaveStatement>( token );
 			}
+
+			static std::unique_ptr<ExpressionStatement> GetExpressionStatement( Token const & token, 
+				std::unique_ptr<Expression> expression )
+			{
+				return make_unique<ExpressionStatement>( token, std::move( expression ) );
+			}
+
+			static std::unique_ptr<ClassDeclaration> GetClassDeclaration( Token const & token )
+			{
+				return make_unique<ClassDeclaration>( token );
+			}
+
+			static std::unique_ptr<DeclarationStatement> GetDeclarationStatement( Token const & token,
+				std::unique_ptr<Declaration> declaration )
+			{
+				return make_unique<DeclarationStatement>( token, std::move( declaration ) );
+			}
+			static std::unique_ptr<LabelStatement> GetLabelStatement( Token const & token,
+				std::unique_ptr<Token> value )
+			{
+				return make_unique<LabelStatement>( token, std::move( value ) );
+			}
+
+			static std::unique_ptr<ExpressionList> GetExpressionList( Token const & token, 
+				std::vector<std::unique_ptr<Expression>> && expressions )
+			{
+				return make_unique<ExpressionList>( token, std::move( expressions ) );
+			}
+
+			static std::unique_ptr<AssignmentExpression> GetAssignmentExpression( Token const & token,
+				std::unique_ptr<Expression> lhs, std::unique_ptr<Expression> rhs )
+			{
+				return make_unique<AssignmentExpression>( token, std::move( lhs ), std::move( rhs ) );
+			}
 		};
 
 		struct Imports

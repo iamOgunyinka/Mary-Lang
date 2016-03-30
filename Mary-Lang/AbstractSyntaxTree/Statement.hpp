@@ -158,14 +158,14 @@ namespace MaryLang
 
 		struct LabelStatement: Statement
 		{
-			LabelStatement( Lexer::Token const & token, std::unique_ptr<Statement> statement )
-				:   Statement( token ), statement_body( std::move( statement ) )
+			LabelStatement( Lexer::Token const & token, std::unique_ptr<Token> val )
+				:   Statement( token ), value( std::move( val ) )
 			{
 			}
 			~LabelStatement() {}
 			ANALYZE_DUMP_DECL;
 		private:
-			std::unique_ptr<Statement> statement_body;
+			std::unique_ptr<Token> value;
 		};
 
 		struct ReturnStatement: Statement
@@ -229,6 +229,26 @@ namespace MaryLang
 			void Append( std::unique_ptr<Statement> statement ) { list.Append( std::move( statement ) ); }
 		private:
 			List<Statement> list;
+		};
+		
+		struct ExpressionStatement: Statement
+		{
+			ExpressionStatement( Token const & token, std::unique_ptr<Expression> expr )
+				: Statement( token ), expression( std::move( expr ) ) {}
+			~ExpressionStatement() {}
+			ANALYZE_DUMP_DECL;
+		private:
+			std::unique_ptr<Expression> expression;
+		};
+
+		struct DeclarationStatement: Statement
+		{
+			DeclarationStatement( Token const & token, std::unique_ptr<Declaration> expr )
+				: Statement( token ), expression( std::move( expr ) ) {}
+			~DeclarationStatement() {}
+			ANALYZE_DUMP_DECL;
+		private:
+			std::unique_ptr<Declaration> expression;
 		};
 	} // namespace AbstractSyntaxTree
 }// namespace MaryLang
