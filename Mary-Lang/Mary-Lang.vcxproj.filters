@@ -68,5 +68,8 @@
     <ClInclude Include="AbstractSyntaxTree\ASTFactory.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Utils\Memory.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

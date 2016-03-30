@@ -22,7 +22,12 @@ namespace MaryLang
 		void Parser::NextToken()
 		{
 			current_token.reset( next_token.release() );
+			if( lookahead_tokens.size() == 0 ){
 			next_token.reset( new Token( lexer.GetNextToken() ) );
+			} else {
+				next_token.reset( new Token( lookahead_tokens.front() ) );
+				lookahead_tokens.pop_front();
+			}
 		}
 
 		bool Parser::IsBuiltInType( TokenType tt )
@@ -31,17 +36,19 @@ namespace MaryLang
 				|| tt == TokenType::TK_STRING || tt == TokenType::TK_DECLTYPE || tt == TokenType::TK_DOUBLE;
 		}
 
-		ParsedProgram *Parser::ParseProgram()
+		std::shared_ptr<ParsedProgram> Parser::ParseProgram()
 		{
 			NextToken();
 			NextToken();
 			ParseImports();
 			ParseSourceElement();
 			Expect( TokenType::TK_EOF );
+			return program;
 		}
 
 		void Parser::ParseSourceElement()
 		{
+			program.reset( new ParsedProgram );
 			while( current_token->Type() != TokenType::TK_EOF )
 			{
 				program->Append( ParseStatement() );
@@ -54,57 +61,57 @@ namespace MaryLang
 
 		}
 
-		Statement *Parser::ParseCompoundStatement()
+		std::unique_ptr<Statement> Parser::ParseCompoundStatement()
 		{
 			Expect( TokenType::TK_LBRACE ); // consume "{"
-			CompoundStatement *statement = ASTFactory::GetCompoundStatement( *current_token );
-			while( current_token->Type() != TokenType::TK_RBRACE )
+			auto statement = ASTFactory::GetCompoundStatement( *current_token );
+			while( current_token->Type() != TokenType::TK_EOF && current_token->Type() != TokenType::TK_RBRACE )
 			{
 				statement->Append( ParseStatement() );
 			}
 			Accept( TokenType::TK_RBRACE ); // consume "}"
-			return statement;
+			return std::move( statement );
 		}
 
-		Statement *Parser::ParseCheckAmongStatement()
+		std::unique_ptr<Statement> Parser::ParseCheckAmongStatement()
 		{
 			Token const token = *current_token;
 			Expect( TokenType::TK_CHECK ); // consume "check"
 			Expect( TokenType::TK_LPAREN ); // consume "("
-			Expression *expression = ParseExpression();
+			std::unique_ptr<Expression>expression = ParseExpression();
 			Expect( TokenType::TK_RPAREN ); //consume ")"
 			Expect( TokenType::TK_AMONG ); // consume "among"
-			Statement *body = ParseStatement();
+			auto statement_body = ParseCompoundStatement();
 
-			return ASTFactory::GetCheckAmongStatement( token, expression, body );
+			return ASTFactory::GetCheckAmongStatement( token, std::move( expression ), std::move( statement_body ) );
 		}
 
-		Statement *Parser::ParseConditionalStatement()
+		std::unique_ptr<Statement> Parser::ParseConditionalStatement()
 		{
 			Token const token ( *current_token );
 			Accept( TokenType::TK_IF ); // consume "if"
-			Accept( TokenType::TK_LPAREN ); // consume "("
-			Expression const * const conditional_expression = ParseExpression();
-			Expression const *other_expression = nullptr;
+			Expect( TokenType::TK_LPAREN ); // consume "("
+			std::unique_ptr<Expression> conditional_expression = ParseExpression();
+			std::unique_ptr<Expression> other_expression = nullptr;
 			if( current_token->Type() == TokenType::TK_AMONG ){
 				Accept( TokenType::TK_AMONG );
 				other_expression = ParseExpression();
 			}
 			Expect( TokenType::TK_RPAREN );
-			Statement const * const statement_body = ParseStatement();
-			Statement const * else_body = nullptr;
+			std::unique_ptr<Statement> statement_body = ParseStatement();
+			std::unique_ptr<Statement> else_body = nullptr;
 			if( current_token->Type() == TokenType::TK_ELSE ){
 				Accept( TokenType::TK_ELSE );
 				else_body = ParseStatement();
 			}
-			Statement const * const if_statement = ASTFactory::GetIfStatement( token,
-				conditional_expression, other_expression, statement_body, else_body );
+			return ASTFactory::GetIfStatement( token, std::move( conditional_expression ), 
+				std::move( other_expression ), std::move( statement_body ), std::move( else_body ) );
 		}
 
-		Statement *Parser::ParseDeclarativeStatement()
+		std::unique_ptr<Statement> Parser::ParseDeclarativeStatement()
 		{
 			Token token = *current_token;
-			Declaration *declaration = nullptr;
+			std::unique_ptr<Declaration> declaration = nullptr;
 			switch( current_token->Type() )
 			{
 			case TokenType::TK_CLASS:
@@ -119,75 +126,68 @@ namespace MaryLang
 			return declaration;
 		}
 
-		Statement *Parser::ParseIterativeStatement()
+		std::unique_ptr<Statement> Parser::ParseIterativeStatement()
 		{
-			Statement *iterativeStatement = nullptr;
 			switch( current_token->Type() )
 			{
 			case TokenType::TK_FOR:
-				iterativeStatement = ParseForStatement();
-				break;
+				return ParseForStatement();
 			case TokenType::TK_DO:
-				iterativeStatement = ParseDoWhileStatement();
-				break;
-			case TokenType::TK_WHILE:
+				return ParseDoWhileStatement();
 			default:
-				iterativeStatement = ParseWhileStatement();
-				break;
+				return ParseWhileStatement();
 			}
-			return iterativeStatement;
 		}
 
-		Statement* Parser::ParseWhileStatement()
+		std::unique_ptr<Statement> Parser::ParseWhileStatement()
 		{
-			Accept( TokenType::TK_WHILE );
 			Token const token = *current_token;
-			Statement *statement = nullptr;
-
+			
+			Accept( TokenType::TK_WHILE );
 			if( current_token->Type() == TokenType::TK_LPAREN ){
 				Accept( current_token->Type() );
 			} else {
-				error_messages.Propagate( *current_token, L"Expected an open parenthesis before the expression" );
+				error_messages->Propagate( *current_token, L"Expected an opening parenthesis before the expression" );
 			}
-			Expression const * const expression = ParseExpression();
+			std::unique_ptr<Expression> expression = ParseExpression();
 			Expect( TokenType::TK_RPAREN );
-			statement = ParseStatement();
+			auto statement = ParseStatement();
 
-			return ASTFactory::GetWhileStatement( token, expression, statement );
+			return ASTFactory::GetWhileStatement( token, std::move( expression ), std::move( statement ) );
 		}
 
-		Statement* Parser::ParseDoWhileStatement()
+		std::unique_ptr<Statement> Parser::ParseDoWhileStatement()
 		{
 			Token const token = *current_token;
 			Accept( TokenType::TK_DO );
-			Statement const * const statement = ParseStatement();
+			std::unique_ptr<Statement> statement = ParseStatement();
 			Expect( TokenType::TK_WHILE );
 			if( current_token->Type() != TokenType::TK_LPAREN ){
-				error_messages.Propagate( token, L"Expected '(' before expression" );
+				error_messages->Propagate( token, L"Expected '(' before expression" );
 			} else {
 				Accept( TokenType::TK_LPAREN );
 			}
-			Expression const * const expression = ParseExpression();
+			std::unique_ptr<Expression> expression = ParseExpression();
 			if( current_token->Type() != TokenType::TK_RPAREN ){
-				error_messages.Propagate( *current_token, L"Expected ')' before expression" );
+				error_messages->Propagate( *current_token, L"Expected ')' before expression" );
 			} else {
 				Accept( TokenType::TK_RPAREN );
 			}
 			Accept( TokenType::TK_SEMICOLON );
-			return ASTFactory::GetDoWhileStatement( token, expression, statement );
+			return ASTFactory::GetDoWhileStatement( token, std::move( expression ), std::move( statement ) );
 		}
 
-		Statement* Parser::ParseForStatement()
+		std::unique_ptr<Statement> Parser::ParseForStatement()
 		{
 			Token const token = *current_token;
 			Accept( TokenType::TK_FOR ); // consume "for"
 			Accept( TokenType::TK_LPAREN ); //consume "("
 
-			Declaration const * declaration = nullptr;
-			Expression  const * init_expression = nullptr;
-			Expression  const * rhs_expression = nullptr;
-			Expression  const * step = nullptr;
-			Expression  const * condition = nullptr;
+			std::unique_ptr<Declaration> declaration = nullptr;
+			std::unique_ptr<Expression> init_expression = nullptr;
+			std::unique_ptr<Expression> rhs_expression = nullptr;
+			std::unique_ptr<Expression> step = nullptr;
+			std::unique_ptr<Expression> condition = nullptr;
 
 			if( IsBuiltInType( current_token->Type() ) || 
 				( current_token->Type() == TokenType::TK_IDENTIFIER && next_token->Type() == TokenType::TK_IDENTIFIER ) )
@@ -199,7 +199,7 @@ namespace MaryLang
 				} else if( TokenType::TK_SEMICOLON == current_token->Type() ) {
 					Accept( TokenType::TK_SEMICOLON );
 				} else {
-					error_messages.Propagate( token, L"" );
+					error_messages->Propagate( token, L"" );
 					while( current_token->Type() != TokenType::TK_SEMICOLON ) NextToken();
 				}
 			}
@@ -217,16 +217,18 @@ namespace MaryLang
 				}
 			}
 			Accept( TokenType::TK_RPAREN );
-			Statement const * const statement = ParseStatement();
+			std::unique_ptr<Statement> statement = ParseStatement();
 
 			if( rhs_expression == nullptr ){ // we have "for( : )" construct
-				return ASTFactory::GetForInStatement( token, declaration, init_expression, rhs_expression, statement );
+				return ASTFactory::GetForInStatement( token, std::move( declaration ), std::move( init_expression ),
+					std::move( rhs_expression ), std::move( statement ) );
 			} else {
-				return ASTFactory::GetForStatement( token, declaration, init_expression, condition, step, statement );
+				return ASTFactory::GetForStatement( token, std::move( declaration ), std::move( init_expression ), 
+					std::move( condition ), std::move( step ), std::move( statement ) );
 			}
 		}
 
-		Declaration* Parser::ParseOtherDeclaration()
+		std::unique_ptr<Declaration> Parser::ParseOtherDeclaration()
 		{
 			switch( current_token->Type() )
 			{
@@ -236,7 +238,7 @@ namespace MaryLang
 				return ParseNamespaceDeclaration();
 			case TokenType::TK_VIRTUAL: 
 				if( next_token->Type() != TokenType::TK_FUNCTION ){
-					error_messages.Propagate( *current_token, L"Keyword virtual is only allowed in class definition \
+					error_messages->Propagate( *current_token, L"Keyword virtual is only allowed in class definition \
 															   with a function" );
 				}
 				return ParseFunctionDeclaration();
@@ -247,7 +249,7 @@ namespace MaryLang
 			}
 		}
 
-		Declaration* Parser::ParseNamespaceDeclaration()
+		std::unique_ptr<Declaration> Parser::ParseNamespaceDeclaration()
 		{
 			Token const token = *current_token;
 			Accept( TokenType::TK_NAMESPACE );
@@ -256,11 +258,11 @@ namespace MaryLang
 				namespace_name.reset( new Token( *current_token ) );
 				Accept( TokenType::TK_IDENTIFIER );
 			}
-			Statement * namespace_body = ParseCompoundStatement();
-			return ASTFactory::GetNamespaceDeclaration( token, std::move( namespace_name ), namespace_body );
+			std::unique_ptr<Statement> namespace_body = ParseCompoundStatement();
+			return ASTFactory::GetNamespaceDeclaration( token, std::move( namespace_name ), std::move( namespace_body ) );
 		}
 
-		Declaration* Parser::ParseFunctionDeclaration()
+		std::unique_ptr<Declaration> Parser::ParseFunctionDeclaration()
 		{
 			Token const functional_specifier = *current_token;
 			if( current_token->Type() == TokenType::TK_STATIC || current_token->Type() == TokenType::TK_VIRTUAL ){
@@ -270,7 +272,7 @@ namespace MaryLang
 
 			Accept( TokenType::TK_FUNCTION ); // consume "function"
 			if( current_token->Type() != TokenType::TK_IDENTIFIER ){
-				error_messages.Propagate( *current_token, L"Expected a function name after keyword function" );
+				error_messages->Propagate( *current_token, L"Expected a function name after keyword function" );
 				TokenType tt = current_token->Type();
 				while( tt != TokenType::TK_LBRACE && tt != TokenType::TK_EOF ){
 					NextToken();
@@ -281,7 +283,7 @@ namespace MaryLang
 			Token const function_name = *current_token;
 			Accept( TokenType::TK_IDENTIFIER );
 			Accept( TokenType::TK_LPAREN );
-			ParameterlistDeclaration *parameter_list = nullptr;
+			std::unique_ptr<ParameterlistDeclaration> parameter_list = nullptr;
 			if( current_token->Type() == TokenType::TK_RPAREN ){ // no parameters
 				Accept( TokenType::TK_RPAREN );
 			} else { // we have parameters
@@ -297,12 +299,18 @@ namespace MaryLang
 				trailing_return_type = *current_token;
 				Expect( TokenType::TK_IDENTIFIER );
 			}
-			Statement const * const function_body = ParseCompoundStatement();
-			return ASTFactory::GetFunctionDeclaration( functional_specifier, token, function_name, parameter_list,
-				trailing_function_property, trailing_return_type, function_body );
+			std::unique_ptr<Statement> function_body = ParseCompoundStatement();
+			return ASTFactory::GetFunctionDeclaration( functional_specifier, token, function_name, std::move( parameter_list ),
+				trailing_function_property, trailing_return_type, std::move( function_body ) );
 		}
 
-		Declaration* Parser::ParseEnumDeclaration()
+		// To-Do
+		std::unique_ptr<Expression> Parser::ParseExpression()
+		{
+
+		}
+
+		std::unique_ptr<Declaration> Parser::ParseEnumDeclaration()
 		{
 			Token const token = *current_token;
 			Expect( TokenType::TK_ENUM );
@@ -310,42 +318,65 @@ namespace MaryLang
 			std::unique_ptr<Token> enum_name = nullptr ;
 
 			if( current_token->Type() == TokenType::TK_IDENTIFIER ){
-				enum_name.reset( new Token( *current_token ) );
+				enum_name = make_unique<Token>( *current_token );
 				Accept( TokenType::TK_IDENTIFIER );
 			}
 			Expect( TokenType::TK_LBRACE ); // consume "{"
-			EnumDeclaration* enum_declaration = ASTFactory::GetEnumDeclaration( token, std::move( enum_name ) );
-
-			std::unique_ptr<Token> enumerator_id, enumerator_value;
+			std::unique_ptr<EnumDeclaration> enum_declaration = ASTFactory::GetEnumDeclaration( token, std::move( enum_name ) );
 
 			while( current_token->Type() != TokenType::TK_EOF ){
 				if( current_token->Type() == TokenType::TK_RBRACE ){
 					break;
 				}
 				if( current_token->Type() != TokenType::TK_IDENTIFIER ){
-					error_messages.Propagate( *current_token, L"Expected an identifier for enumerator" );
+					error_messages->Propagate( *current_token, L"Expected an identifier for enumerator" );
 					while( current_token->Type() != TokenType::TK_RBRACE ) NextToken();
 					break;
 				}
-				enumerator_id.reset( new Token( *current_token ) );
+				
+				Token const enumerator_id = *current_token;
+				std::unique_ptr<Token> enumerator_value = nullptr;
+
 				Accept( TokenType::TK_IDENTIFIER );
+				
 				if( current_token->Type() == TokenType::TK_ASSIGN ){
-					NextToken(); // consume "="
+					Accept( TokenType::TK_ASSIGN ); // consume "="
 					if( current_token->Type() != TokenType::TK_INT ){
-						error_messages.Propagate( *current_token, L"Expects a constant integer" );
-						continue;
+						error_messages->Propagate( *current_token, L"Expects a constant integer" );
+						NextToken();
+					} else {
+						enumerator_value = make_unique<Token>( *current_token );
+						Accept( TokenType::TK_INT );
 					}
-					enumerator_value.reset( new Token( *current_token ) );
-					Accept( TokenType::TK_INT );
 				}
-				enum_declaration->Append( std::move( enumerator_id ), std::move( enumerator_value ) );
+				enum_declaration->Append( enumerator_id, std::move( enumerator_value ) );
 				if( current_token->Type() != TokenType::TK_COMMA ) Accept( TokenType::TK_RBRACE );
 				Accept( TokenType::TK_COMMA ); //consume ","
 			}
-			return enum_declaration;
+			return std::move( enum_declaration );
 		}
 
-		Statement *Parser::ParseStatement()
+		std::unique_ptr<Statement> Parser::ParseJumpStatement()
+		{
+			auto token = *current_token;
+			switch( current_token->Type() )
+			{
+			case TokenType::TK_CONTINUE:
+				Accept( TokenType::TK_CONTINUE );
+				Accept( TokenType::TK_SEMICOLON );
+				return ASTFactory::GetContinueStatement( token );
+			case TokenType::TK_LEAVE:
+				Accept( TokenType::TK_LEAVE );
+				Accept( TokenType::TK_SEMICOLON );
+				return ASTFactory::GetLeaveStatement( token );
+			default:
+				Accept( TokenType::TK_RETURN );
+				auto expression = ParseExpression();
+				return ASTFactory::GetReturnStatement( token, std::move( expression ) );
+			}
+		}
+
+		std::unique_ptr<Statement> Parser::ParseStatement()
 		{
 			switch ( current_token->Type() )
 			{
@@ -361,8 +392,8 @@ namespace MaryLang
 				return ParseIterativeStatement();
 			case TokenType::TK_SEMICOLON: // empty statement
 				Accept( TokenType::TK_SEMICOLON ); // eat semi-colon
-				return nullptr;
-			case TokenType::TK_RETURN: // break statement
+				return ParseStatement();
+			case TokenType::TK_RETURN: // jump statement
 			case TokenType::TK_CONTINUE:
 			case TokenType::TK_LEAVE:
 				return ParseJumpStatement();
@@ -372,19 +403,22 @@ namespace MaryLang
 			case TokenType::TK_CLASS:
 			case TokenType::TK_STRING:
 			case TokenType::TK_FUNCTION:
+			case TokenType::TK_STATIC:
+			case TokenType::TK_VIRTUAL:
 			case TokenType::TK_NAMESPACE:
 			case TokenType::TK_DECLTYPE:
 				return ParseDeclarativeStatement();
 			case TokenType::TK_ISIT: // labelled statement
-				return ParseLabelledStatement();
+				return  ParseLabelledStatement();
+			 // case TokenType::TK_IDENTIFIER:
 			default:
 				// could it be a class name followed by a variable name?
 				if( next_token->Type() == TokenType::TK_IDENTIFIER ){
 					return ParseDeclarativeStatement();
 				} else { 
-					// or a qualified ID like std.io.println( ), std.container.vector
+					// or a qualified ID like std.io.println( ), std.container.vector?
 					if( next_token->Type() == TokenType::TK_DOT ){
-						std::vector<Token> tokens;
+						std::deque<Token> tokens;
 						while( next_token->Type() == TokenType::TK_DOT && current_token->Type() == TokenType::TK_IDENTIFIER )
 						{
 							tokens.push_back( *current_token );
@@ -394,12 +428,10 @@ namespace MaryLang
 							NextToken();
 						}
 						if( next_token->Type() == TokenType::TK_IDENTIFIER ){
-							return ParseVariableDeclaration( tokens );
-						} else {
-							return ParseExpressionStatement();
+							lookahead_tokens = std::move( tokens );
+							return ParseVariableDeclaration();
 						}
 					}
-					return ParseExpressionStatement();
 				}
 				break;
 			}

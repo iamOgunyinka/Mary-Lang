@@ -4,6 +4,10 @@
 #include "List.hpp"
 #include "Expression.hpp"
 
+#define ANALYZE_DUMP_DECL \
+	void Analyze() const; \
+	void Dump() const
+
 namespace MaryLang
 {
 	// forward declarations
@@ -14,14 +18,6 @@ namespace MaryLang
 
 	namespace AbstractSyntaxTree
 	{
-		struct Locatable
-		{
-			Locatable( Lexer::Token const & tk ): token( tk ) {}
-			virtual ~Locatable() { }
-		private:
-			Lexer::Token token;
-		}; // struct Locatable
-
 		struct Statement: Locatable
 		{
 			Statement( Lexer::Token const & token ): Locatable( token ) {}
@@ -29,6 +25,7 @@ namespace MaryLang
 
 			//virtual void Emit( CodeGeneration::CodeGen & cfg ) const = 0;
 			virtual void Analyze() const = 0; //all analysis should be defined in the Semantic Analyzer directory
+			virtual void Dump() const = 0;
 		}; // struct Statement
 
 		struct IllegalStatement: Statement
@@ -36,181 +33,179 @@ namespace MaryLang
 			IllegalStatement( Lexer::Token & token ): Statement( token ) {}
 			~IllegalStatement(){}
 
-			void Analyze() const;
-			//virtual void Emit( CodeGeneration::CodeGen & cfg ) const;
+			ANALYZE_DUMP_DECL;
 		};
 
 		struct CaseOfStatement: Statement
 		{
-			CaseOfStatement( Lexer::Token const & token, Expression const * const expression,
-				Statement const* const statement )
+			CaseOfStatement( Lexer::Token const & token, std::unique_ptr<Expression> expression,
+				std::unique_ptr<Statement> statement )
 				: Statement( token ),
-				condition_expression( expression ),
-				statement_body( statement )
+				condition_expression( std::move( expression ) ),
+				statement_body( std::move( statement ) )
 			{
 			}
 			~CaseOfStatement() { }
-			void Analyze() const;
+			ANALYZE_DUMP_DECL;
 		private:
-			Expression const * const condition_expression;
-			Statement  const * const statement_body;
+			std::unique_ptr<Expression> const condition_expression;
+			std::unique_ptr<Statement>  const statement_body;
 		};
 
 		struct IfStatement: Statement
 		{
 			IfStatement( Lexer::Token const & token, 
-				Expression const * const conditionalExpression,
-				Expression const * const expr,
-				Statement const * const statementBody, 
-				Statement const * const elseBody = nullptr )
+				std::unique_ptr<Expression> conditionalExpression,
+				std::unique_ptr<Expression> expr,
+				std::unique_ptr<Statement> statementBody, 
+				std::unique_ptr<Statement> elseBody = nullptr )
 				: Statement( token ), 
-				condExpressionPart( conditionalExpression ), expression( expr ),
-				thenStatementPart( statementBody ), elseStatementPart( elseBody )
+				condExpressionPart( std::move( conditionalExpression ) ), expression( std::move( expr ) ),
+				thenStatementPart( std::move( statementBody ) ), elseStatementPart( std::move( elseBody ) )
 			{
 			}
 			~IfStatement() { }
-			void Analyze() const;
-			//void Emit( CodeGeneration::CodeGen & cfg ) const = 0;
+			ANALYZE_DUMP_DECL;
 		private:
-			Expression const * const condExpressionPart;
-			Expression const * const expression;
-			Statement const  * const thenStatementPart;
-			Statement const  * const elseStatementPart;
+			std::unique_ptr<Expression> const condExpressionPart;
+			std::unique_ptr<Expression> const expression;
+			std::unique_ptr<Statement>  const thenStatementPart;
+			std::unique_ptr<Statement>  const elseStatementPart;
 		}; // struct IfStatement
 
 		// base class for all iterative statements
 		struct IterativeStatement: Statement
 		{
-			IterativeStatement( Lexer::Token const & token, Statement const * const statement )
-				: Statement( token ), statement_body( statement )
+			IterativeStatement( Lexer::Token const & token, std::unique_ptr<Statement> statement )
+				: Statement( token ), statement_body( std::move( statement ) )
 			{
 			}
 
 			virtual ~IterativeStatement() { }
-
-			void Analyze() const = 0;
+			ANALYZE_DUMP_DECL;
 		private:
-			Statement const * const statement_body;
+			std::unique_ptr<Statement> const statement_body;
 		};
 
 		struct DoWhileStatement: IterativeStatement
 		{
-			DoWhileStatement( Lexer::Token const & token, Expression const * const expression,
-				Statement const * const statement )
-				: IterativeStatement( token, statement ), conditional_expression( expression )
+			DoWhileStatement( Lexer::Token const & token, std::unique_ptr<Expression> expression,
+				std::unique_ptr<Statement> statement )
+				: IterativeStatement( token, std::move( statement ) ), 
+				conditional_expression( std::move( expression ) )
 			{
 			}
 			~DoWhileStatement() {}
-
-			void Analyze() const;
+			ANALYZE_DUMP_DECL;
 		private:
-			Expression const * const conditional_expression;
+			std::unique_ptr<Expression> const conditional_expression;
 		};
 
 		struct WhileStatement: IterativeStatement
 		{
-			WhileStatement( Lexer::Token const & token, Expression const* const expression,
-				Statement const * const statement )
-				: IterativeStatement( token, statement ), condition_expression( expression )
+			WhileStatement( Lexer::Token const & token, std::unique_ptr<Expression> expression,
+				std::unique_ptr<Statement> statement )
+				: IterativeStatement( token, std::move( statement )  ), 
+				condition_expression( std::move( expression ) )
 			{
 			}
 			~WhileStatement(){}
-			void Analyze() const final;
+			ANALYZE_DUMP_DECL;
 		protected:
-			Expression const * const condition_expression;
+			std::unique_ptr<Expression> const condition_expression;
 		};
 
 		struct Declaration; //forward declaration
 
 		struct ForStatement: IterativeStatement
 		{
-			ForStatement( Lexer::Token const & token, Declaration const * const declaration,
-				Expression const * const initializer, Expression const * const condition,
-				Expression const * const step, Statement const * const statement )
-				:   IterativeStatement( token, statement ),
-				initializing_declaration( declaration ),
-				initializing_expression( initializer ),
-				conditional_expression( condition ),
-				stepping_expression( step )
+			ForStatement( Lexer::Token const & token, std::unique_ptr<Declaration> declaration,
+				std::unique_ptr<Expression> initializer, std::unique_ptr<Expression> condition,
+				std::unique_ptr<Expression> step, std::unique_ptr<Statement> statement )
+				:   IterativeStatement( token, std::move( statement ) ),
+				initializing_declaration( std::move( declaration ) ),
+				initializing_expression( std::move( initializer ) ),
+				conditional_expression( std::move( condition ) ),
+				stepping_expression( std::move( step ) )
 			{
 			}
 			~ForStatement() { }
-			void Analyze() const final;
+			ANALYZE_DUMP_DECL;
 		private:
-			Declaration const * const initializing_declaration;
-			Expression  const * const initializing_expression;
-			Expression  const * const conditional_expression;
-			Expression  const * const stepping_expression;
+			std::unique_ptr<Declaration> const initializing_declaration;
+			std::unique_ptr<Expression>  const initializing_expression;
+			std::unique_ptr<Expression>  const conditional_expression;
+			std::unique_ptr<Expression>  const stepping_expression;
 		};
 
 		struct ForInStatement: IterativeStatement
 		{
-			ForInStatement( Lexer::Token const & token, Declaration const * const declaration,
-				Expression const * const expr, Expression const * const init, 
-				Statement const * const statement )
-				: IterativeStatement( token, statement ),
-				initializer( declaration ), lhs_expression( init ),
-				rhs_expression( expr )
+			ForInStatement( Lexer::Token const & token, std::unique_ptr<Declaration> declaration,
+				std::unique_ptr<Expression> expr, std::unique_ptr<Expression> init, 
+				std::unique_ptr<Statement> statement )
+				: IterativeStatement( token, std::move( statement ) ),
+				initializer( std::move( declaration ) ), lhs_expression( std::move( init ) ),
+				rhs_expression( std::move( expr ) )
 			{
 			}
 			virtual ~ForInStatement() {}
-			virtual void Analyze() const;
+			ANALYZE_DUMP_DECL;
 		protected:
-			Declaration const * const initializer;
-			Expression  const * const lhs_expression;
-			Expression  const * const rhs_expression;
+			std::unique_ptr<Declaration> const initializer;
+			std::unique_ptr<Expression>  const lhs_expression;
+			std::unique_ptr<Expression>  const rhs_expression;
 		};
 
 		struct LabelStatement: Statement
 		{
-			LabelStatement( Lexer::Token const & token, Statement const * const statement )
-				:   Statement( token ), statement_body( statement )
+			LabelStatement( Lexer::Token const & token, std::unique_ptr<Statement> statement )
+				:   Statement( token ), statement_body( std::move( statement ) )
 			{
 			}
 			~LabelStatement() {}
-			void Analyze() const final;
+			ANALYZE_DUMP_DECL;
 		private:
-			Statement const * const statement_body;
+			std::unique_ptr<Statement> statement_body;
 		};
 
 		struct ReturnStatement: Statement
 		{
-			ReturnStatement( Lexer::Token const & token, Expression const * const expr )
-				:   Statement( token ), expression( expr )
+			ReturnStatement( Lexer::Token const & token, std::unique_ptr<Expression> expr )
+				:   Statement( token ), expression( std::move( expr ) )
 			{
 			}
 			~ReturnStatement() {}
-			void Analyze() const final;
+			ANALYZE_DUMP_DECL;
 		private:
-			Expression const * const expression;
+			std::unique_ptr<Expression> const expression;
 		};
 
 		struct CheckAmongStatement: Statement
 		{
-			CheckAmongStatement( Token const & token, Expression const * const expr,
-				Statement const * const body )
-				: Statement( token ), conditional_expression( expr ),
-				statement_body( body )
+			CheckAmongStatement( Lexer::Token const & token, std::unique_ptr<Expression> expr,
+				std::unique_ptr<Statement> body )
+				: Statement( token ), conditional_expression( std::move( expr ) ),
+				statement_body( std::move( body ) )
 			{
 			}
 			~CheckAmongStatement() {}
-			void Analyze() const;
-
-			Expression const * const conditional_expression;
-			Statement  const * const statement_body;
+			ANALYZE_DUMP_DECL;
+		private:
+			std::unique_ptr<Expression> const conditional_expression;
+			std::unique_ptr<Statement>  const statement_body;
 		};
 		struct ContinueStatement: Statement
 		{
 			ContinueStatement( Lexer::Token const & token ): Statement( token ){}
 			~ContinueStatement() {}
-			void Analyze() const final;
+			ANALYZE_DUMP_DECL;
 		};
 
-		struct BreakStatement: Statement
+		struct LeaveStatement: Statement
 		{
-			BreakStatement( Lexer::Token const & token ): Statement( token ){}
-			~BreakStatement() {}
-			void Analyze() const final;
+			LeaveStatement( Lexer::Token const & token ): Statement( token ){}
+			~LeaveStatement() {}
+			ANALYZE_DUMP_DECL;
 		};
 
 		struct CompoundStatement: Statement
@@ -220,8 +215,7 @@ namespace MaryLang
 			{
 			}
 			~CompoundStatement(){}
-			void Analyze() const final;
-			void emit( CodeGeneration::CodeGen & codegen );
+			ANALYZE_DUMP_DECL;
 
 			typedef List<Statement>::const_iterator const_iterator;
 			typedef List<Statement>::iterator		iterator;
@@ -232,7 +226,7 @@ namespace MaryLang
 			const_iterator cbegin() const { return list.cbegin(); }
 			const_iterator cend() const { return list.cend(); }
 			size_type Size() { return list.Size(); }
-			void Append( Statement const * const statement ) { list.Append( statement ); }
+			void Append( std::unique_ptr<Statement> statement ) { list.Append( std::move( statement ) ); }
 		private:
 			List<Statement> list;
 		};

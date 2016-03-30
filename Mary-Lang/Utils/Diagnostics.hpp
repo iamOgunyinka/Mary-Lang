@@ -20,11 +20,11 @@ namespace MaryLang
 			{ }
 
 			inline void Note( Position const & pos, wchar_t const * note ) {
-				print_pos( pos, Kind::K_Note, note );
+				PrintPos( pos, Kind::K_Note, note );
 			}
 
 			inline void Warning( Position const & pos, wchar_t const * w ) {
-				print_pos( pos, Kind::K_Warning, w );
+				PrintPos( pos, Kind::K_Warning, w );
 			}
 
 			inline void Error( wchar_t const * what )
@@ -35,7 +35,7 @@ namespace MaryLang
 			}
 			inline void Error( Position const & pos, wchar_t const * m ) {
 				++numErrors_;
-				print_pos( pos, Kind::K_Error, m );
+				PrintPos( pos, Kind::K_Error, m );
 			}
 
 			unsigned HasError() {

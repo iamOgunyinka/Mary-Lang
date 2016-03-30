@@ -160,17 +160,16 @@ namespace MaryLang
 
 			wchar_t const*      Id() const { return _id; }
 			Support::Position	Pos() const { return _pos; }
-			TokenType			Type() const { return _type; }
+			inline TokenType	Type() const { return _type; }
 
-			typedef std::unordered_map< wchar_t const *, TokenType, Support::WStrHash, 
-				Support::WStrEqual> LookupTable;
+			typedef std::unordered_map< wchar_t const *, TokenType, Support::WStrHash, Support::WStrEqual> LookupTable;
 
 			static LookupTable lookup_table;
 			static void InitLookupTable();
 
-			friend std::wostream & operator<<( std::wostream & os, Token const & t ){
-				return os << L"ID: '" << t.id() << L"', " << t.pos() << L" : " 
-					<< static_cast<int>( t.type() );
+			friend std::wostream & operator<<( std::wostream & os, Token const & t )
+			{
+				return os << L"ID: '" << t.Id() << L"', " << t.Pos() << L" : " << static_cast<int>( t.Type() );
 			}
 		private:
 			wchar_t const *				GetName( TokenType tt ) const;

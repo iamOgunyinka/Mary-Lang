@@ -1,10 +1,18 @@
 #pragma once
 
+#include "../Scanner/tokens.hpp"
+#include "List.hpp"
+
+#define ANALYZE_DUMP_DECL \
+	void Analyze() const; \
+	void Dump() const
+
 namespace MaryLang
 {
     namespace AbstractSyntaxTree
     {
 		using Lexer::Token;
+		struct Printer;
 
 		struct Expression: Locatable
 		{
@@ -14,6 +22,7 @@ namespace MaryLang
 			}
 			virtual ~Expression() {}
 			virtual void Analyze() const = 0;
+			virtual void Dump() const;
 			bool is_lvalue;
 		};
 
@@ -24,22 +33,19 @@ namespace MaryLang
 			{
 			}
 			~IllegalExpression() {}
-			void Analyze() const;
+			ANALYZE_DUMP_DECL;
 		};
 
-		struct ExpressionList: Expression, List<Expression>
+		struct ExpressionList: Expression
 		{
-			explicit ExpressionList( Token const & token )
-				: Expression( token ), List()
-			{
-			}
-			explicit ExpressionList( Token const & token,
-				std::vector<Expression const *> const & expressions )
-				: Expression( token ), List( expressions )
+			ExpressionList( Token const & token ): Expression( token )
 			{
 			}
 			~ExpressionList() {}
-			void Analyze() const;
+			ANALYZE_DUMP_DECL;
+
+		private:
+			List<Expression> expressions;
 		};
 
 		struct Variable: Expression
@@ -57,7 +63,7 @@ namespace MaryLang
 			{
 			}
 			~Constant(){}
-			void Analyze() const;
+			ANALYZE_DUMP_DECL;
 		};
 
 		struct StringLiteralExpression: Expression
@@ -66,7 +72,7 @@ namespace MaryLang
 			{
 			}
 			~StringLiteralExpression(){}
-			void Analyze() const;
+			ANALYZE_DUMP_DECL;
 		};
 
 		struct StringInterpolExpression: Expression
@@ -75,22 +81,23 @@ namespace MaryLang
 			{
 			}
 			~StringInterpolExpression(){}
-			void Analyze() const;
+			ANALYZE_DUMP_DECL;
 		};
 
 		struct ConditionalExpression: Expression
 		{
-			ConditionalExpression( Token const & token, Expression const * const cond,
-				Expression const * const lhs, Expression const * const rhs )
-				: Expression( token ), conditional_expression( cond ),
-				lhs_expression( lhs ), rhs_expression( rhs )
+			ConditionalExpression( Token const & token, std::unique_ptr<Expression> cond,
+				std::unique_ptr<Expression> lhs, std::unique_ptr<Expression> rhs )
+				: Expression( token ), conditional_expression( std::move( cond ) ),
+				lhs_expression( std::move( lhs ) ), rhs_expression( std::move( rhs ) )
 			{
 			}
 			~ConditionalExpression() {}
-			void Analyze() const;
-			Expression const * const conditional_expression;
-			Expression const * const lhs_expression;
-			Expression const * const rhs_expression;
+			ANALYZE_DUMP_DECL;
+		private:
+			std::unique_ptr<Expression> const conditional_expression;
+			std::unique_ptr<Expression> const lhs_expression;
+			std::unique_ptr<Expression> const rhs_expression;
 		};
 
 		struct UnaryExpression: Expression
@@ -104,28 +111,29 @@ namespace MaryLang
 
 		struct BinaryExpression: Expression
 		{
-			BinaryExpression( Token const & token, Expression const * const lhs,
-				Expression const * const rhs )
-				: Expression( token ), lhs_expression( lhs ),
-				rhs_expression( rhs )
+			BinaryExpression( Token const & token, std::unique_ptr<Expression> lhs,
+				std::unique_ptr<Expression> rhs )
+				: Expression( token ), lhs_expression( std::move( lhs ) ),
+				rhs_expression( std::move( rhs ) )
 			{
 			}
 			virtual ~BinaryExpression(){}
 			virtual void Analyze() const = 0;
-
-			Expression const * const lhs_expression;
-			Expression const * const rhs_expression;
+			virtual void Dump() const;
+		private:
+			std::unique_ptr<Expression> const lhs_expression;
+			std::unique_ptr<Expression> const rhs_expression;
 		};
 
 		struct AssignmentExpression: BinaryExpression
 		{
-			AssignmentExpression( Token const & token, Expression const * const lhs,
-				Expression const * const rhs )
-				: BinaryExpression( token, lhs, rhs )
+			AssignmentExpression( Token const & token, std::unique_ptr<Expression> lhs,
+				std::unique_ptr<Expression> rhs )
+				: BinaryExpression( token, std::move( lhs), std::move( rhs ) )
 			{
 			}
 			~AssignmentExpression(){}
-			void Analyze() const;
+			ANALYZE_DUMP_DECL;
 		};
 
 		struct PostfixExpression: UnaryExpression
@@ -138,39 +146,32 @@ namespace MaryLang
 
 		struct SubscriptExpression: PostfixExpression
 		{
-			SubscriptExpression( Token const & token, Expression const * const expr, 
-				Expression const * const index )
-				: PostfixExpression( token ), expression( expr ),
-				index_expr( index )
+			SubscriptExpression( Token const & token, std::unique_ptr<Expression> expr, 
+				std::unique_ptr<Expression> index )
+				: PostfixExpression( token ), expression( std::move( expr ) ),
+				index_expr( std::move( index ) )
 			{
 			}
 			~SubscriptExpression(){}
-			void Analyze() const;
-
-			Expression const * const expression;
-			Expression const * const index_expr;
+			ANALYZE_DUMP_DECL;
+		private:
+			std::unique_ptr<Expression> const expression;
+			std::unique_ptr<Expression> const index_expr;
 		};
 
 		struct DotExpression: PostfixExpression
 		{
-			DotExpression( Token const & token, Expression const * const expr,
+			DotExpression( Token const & token, std::unique_ptr<Expression> expr,
 				Token const & id )
-				: PostfixExpression( token ), expression( expr ),
+				: PostfixExpression( token ), expression( std::move( expr ) ),
 				token_id( id )
 			{
 			}
 			~DotExpression(){}
-			void Analyze() const;
-
-			Expression const * const expression;
+			ANALYZE_DUMP_DECL;
+		private:
+			std::unique_ptr<Expression> const expression;
 			Token	   const &		 token_id;
-		};
-
-		struct FunctionCall: PostfixExpression
-		{
-			FunctionCall( Token const & token, Expression const * const expr )
-			:
-			{}
 		};
     } // namespace AbstractSyntaxTree
 } //namespace MaryLang

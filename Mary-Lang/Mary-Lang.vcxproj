@@ -79,6 +79,7 @@
     <ClInclude Include="Scanner\Scanner.hpp" />
     <ClInclude Include="Scanner\tokens.hpp" />
     <ClInclude Include="Utils\Diagnostics.hpp" />
+    <ClInclude Include="Utils\Memory.hpp" />
     <ClInclude Include="Utils\Position.hpp" />
     <ClInclude Include="Utils\Utils.hpp" />
   </ItemGroup>

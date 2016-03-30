@@ -11,7 +11,7 @@ set( PARSER_DIR ${MARY_LANG_DIR}/Parser )
 set( AST_DIR ${MARY_LANG_DIR}/AbstractSyntaxTree )
 set( UTILS_DIR ${MARY_LANG_DIR}/Utils )
 
-add_definitions( "-std=c++11" )
+add_definitions( "-std=c++14" )
 
 # define the sources of the compiler
 set(SOURCES

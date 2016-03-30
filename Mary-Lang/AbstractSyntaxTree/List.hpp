@@ -1,6 +1,8 @@
 #pragma once
 
 #include <vector>
+#include <memory>
+#include "../Scanner/tokens.hpp"
 
 namespace MaryLang
 {
@@ -10,18 +12,12 @@ namespace MaryLang
         struct List
         {
             List( ): _list() {}
-			List( std::vector< std::unique_ptr<T>> const & list ): _list( list ) {}
-            List() {}
+			List( std::vector<std::unique_ptr<T>> const & list ): _list( list ) {}
+            ~List() {}
             
-            List& operator+=( T const * t )
+			inline void Append( std::unique_ptr<T> t )
             {
-                Append( t );
-                return *this;
-            }
-            
-            inline void Append( T const * t )
-            {
-				_list.push_back( std::unique_ptr<T>( t ) );
+				_list.push_back( std::move( t ) );
             }
 			typedef typename std::vector<std::unique_ptr<T>>::iterator        iterator;
 			typedef typename std::vector<std::unique_ptr<T>>::const_iterator  const_iterator;
@@ -37,6 +33,17 @@ namespace MaryLang
         private:
 			std::vector<std::unique_ptr<T>> _list;
         }; // struct List
-        
+
+		using Lexer::Token;
+
+		struct Printer;
+		struct Locatable
+		{
+			Locatable( Token const & tk ): token( tk ) {}
+			virtual void Dump() const = 0;
+			virtual void Print( Printer & print ) const;
+		private:
+			Token const token;
+		};
     } // namespace AbstractSyntaxTree
 } // namespace MaryLang
