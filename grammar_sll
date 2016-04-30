@@ -42,7 +42,7 @@ Lambda                  ::=
 ;
 
 NumericLiteral          ::=
-        "NumericLiterals"
+        "NumericLiteral"
 ;
 
 StringLiteral           ::=
@@ -81,44 +81,50 @@ DeclarationStatement    ::=
 ;
 
 VariableDeclaration     ::=
-        TypeSpecifier DeclarationList ";"
-    |   TypeQualifier VariableDeclaration
+        "var" "Identifier" [ ":" TypeSpecifier ] [ Initializer ] [ DeclarationList ] ";"
 ;
 
 TypeSpecifier           ::=
-        BuiltinTypes
-    |   "var"
-    |   QualifiedId
+        Type [ "->" TypeSpecifier ]
     |   "decltype" "(" Expression ")"
+    |   "(" [ TypeSpecifierList ] ")" "->" TypeSpecifier
 ;
 
-QualifiedId             ::=
-        "Identifier".QualifiedId
-    |   "Identifier"
+TypeSpecifierList                ::=
+        TypeSpecifier [ "," TypeSpecifierList ]
+;
+
+Type                    ::=
+        "Identifier" [ GenericType ] [ QualifiedType ] [ RestType ]
+;
+
+QualifiedType           ::=
+        "::" Identifier
+;
+
+GenericType             ::=
+       "<" TypeSpecifierList ">"
+;
+
+RestType                ::=
+        "[" "NumericLiteral [ ArrayElemList ] "]"
+    |   "*" RestType
+;
+
+ArrayElemList           ::=
+        "," "NumericLiteral" [ ArrayElemList ]
 ;
 
 TypeQualifier           ::=
         "const"
 ;
 
-BuiltinTypes            ::=
-        "int"
-    |   "double"
-    |   "string"
-    |   "boolean"
-;
-
 DeclarationList ::=
-        Decl [ "," DeclarationList ]
+        ","  Identifier [ Initializer ] [ DeclarationList ]
 ;
 
-Decl                   ::=
-        "Identifier" OptionalInitalizer
-;
-
-OptionalInitalizer      ::=
+Initalizer      ::=
         "=" AssignmentExpression
-    |   Epsilon
 ;
 
 NamespaceDeclaration    ::=
@@ -138,17 +144,11 @@ Enumerator              ::=
 ;
 
 ClassDeclaration        ::=
-        "class" "Identifier" OptionalBaseClasses "{" ClassBody "}" ";"
+        "class" "Identifier" [ GenericType ] [ BaseClasses ] "{" ClassBody "}" ";"
 ;
 
 OptionalBaseClasses    ::=
-        "extends" TypeSpecifier TypeSpecifierList
-    |   Epsilon
-;
-
-TypeSpecifierList       ::=
-        "," TypeSpecifier TypeSpecifierList
-    |   Epsilon
+        "extends" TypeSpecifierList
 ;
 
 ClassBody               ::=
@@ -166,16 +166,20 @@ ClassBodyList           ::=
 ;
 
 FunctionDeclaration         ::=
-        [ FunctionSpecifier ] "function" "Identifier" "(" [ ParameterList ] ")" [ "final" | "override" ] [ "->" TypeSpecifier ] CompoundStatement
+        "function" [ FunctionSpecifier ] "Identifier" [ GenericType ] "(" [ ParameterList ] ")" [ "->" TypeSpecifier ] CompoundStatement
+    |   "implement" "operator" AssignmentOperator "for" "(" ParameterList ")" [ "->" TypeSpecifier ] CompoundStatement
 ;
 
-FunctionSpecifier           ::=
-        "virtual"
-    |   "static"
+FunctionSpecifier       ::=
+        "Identifier" [ "," Identifier" ]*
 ;
 
-ParameterList               ::=
-        "Identifier" [ "," ParameterList ]
+Parameter               ::=
+        [ "var" ] "Identifier" ":" TypeSpecifier [ ParameterList ]
+;
+
+ParameterList           ::=
+        "," Parameter [ ParameterList ]
 ;
 
 ExpressionStatement     ::=
