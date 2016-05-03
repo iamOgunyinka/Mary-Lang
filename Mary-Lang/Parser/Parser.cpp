@@ -22,19 +22,9 @@ namespace MaryLang
 		void Parser::NextToken()
 		{
 			current_token.reset( next_token.release() );
-			if( lookahead_tokens.size() == 0 ){
-				next_token.reset( new Token( lexer.GetNextToken() ) );
-			} else {
-				next_token.reset( new Token( lookahead_tokens.front() ) );
-				lookahead_tokens.pop_front();
-			}
+			next_token.reset( new Token( lexer.GetNextToken() ) );
 		}
 
-		inline bool Parser::IsBuiltInType( TokenType tt )
-		{
-			return tt == TokenType::TK_VAR || tt == TokenType::TK_INT || tt == TokenType::TK_BOOLEAN
-				|| tt == TokenType::TK_STRING || tt == TokenType::TK_DECLTYPE || tt == TokenType::TK_DOUBLE;
-		}
 
 		// To-Do. List all C++'s operator precedence rules.
 		Parser::PrecAssocPair Parser::GetPrecedence( TokenType tt )
@@ -105,12 +95,13 @@ namespace MaryLang
 			Token const token ( *current_token );
 			Accept( TokenType::TK_IF ); // consume "if"
 			Expect( TokenType::TK_LPAREN ); // consume "("
-			std::unique_ptr<Expression> conditional_expression = ParseExpression();
-			std::unique_ptr<Expression> other_expression = nullptr;
-			if( current_token->Type() == TokenType::TK_AMONG ){
-				Accept( TokenType::TK_AMONG );
-				other_expression = ParseExpression();
-			}
+			std::unique_ptr<Expression> conditional_expression;
+                        std::unique_ptr<Declaration> declaration;
+			if( current_token->Type() == TokenType::TK_VAR ){
+			    declaration = ParseDeclarationStatement( );
+			} else {
+                             conditional_expression = ParseExpression();
+                        }
 			Expect( TokenType::TK_RPAREN );
 			std::unique_ptr<Statement> statement_body = ParseStatement();
 			std::unique_ptr<Statement> else_body = nullptr;
@@ -119,7 +110,7 @@ namespace MaryLang
 				else_body = ParseStatement();
 			}
 			return ASTFactory::GetIfStatement( token, std::move( conditional_expression ), 
-				std::move( other_expression ), std::move( statement_body ), std::move( else_body ) );
+				std::move( declaration ), std::move( statement_body ), std::move( else_body ) );
 		}
 
 		inline std::unique_ptr<Statement> Parser::ParseDeclarationStatement()
@@ -250,15 +241,6 @@ namespace MaryLang
 				return ParseFunctionDeclaration();
 			case TokenType::TK_NAMESPACE:
 				return ParseNamespaceDeclaration();
-			case TokenType::TK_VIRTUAL: 
-				if( next_token->Type() != TokenType::TK_FUNCTION )
-				{
-					error_messages->Propagate( *current_token, L"Keyword virtual is only allowed in class definition \
-																with a function" );
-				}
-				return ParseFunctionDeclaration();
-			case TokenType::TK_STATIC:
-				return next_token->Type() == TokenType::TK_FUNCTION ? ParseFunctionDeclaration(): ParseVariableDeclaration();
 			default:
 				return ParseVariableDeclaration();
 			}
@@ -279,44 +261,26 @@ namespace MaryLang
 
 		std::unique_ptr<Declaration> Parser::ParseFunctionDeclaration()
 		{
-			Token const functional_specifier = *current_token;
-			if( current_token->Type() == TokenType::TK_STATIC || current_token->Type() == TokenType::TK_VIRTUAL ){
-				NextToken();
-			}
-			Token const token = *current_token;
-
-			Accept( TokenType::TK_FUNCTION ); // consume "function"
-			if( current_token->Type() != TokenType::TK_IDENTIFIER ){
-				error_messages->Propagate( *current_token, L"Expected a function name after keyword function" );
-				TokenType tt = current_token->Type();
-				while( tt != TokenType::TK_LBRACE && tt != TokenType::TK_EOF ){
-					NextToken();
-					tt = current_token->Type();
-				}
-				return nullptr;
+                        Token const token = *current_token;
+			Accept( TokenType::TK_FUNCTION );
+                        std::unique_ptr<FunctionSpecifier> function_specifier;
+			if( current_token->Type() == TokenType::TK_LBRACKET ){
+			    function_specifier = ParseFunctionSpecifier();
 			}
 			Token const function_name = *current_token;
 			Accept( TokenType::TK_IDENTIFIER );
 			Accept( TokenType::TK_LPAREN );
-			std::unique_ptr<ParameterlistDeclaration> parameter_list = nullptr;
-			if( current_token->Type() == TokenType::TK_RPAREN ){ // no parameters
-				Accept( TokenType::TK_RPAREN );
-			} else { // we have parameters
-				parameter_list = ParseParameterList();
-			}
-			Token trailing_function_property = *current_token;
-			if( current_token->Type() == TokenType::TK_IDENTIFIER ){
-				Accept( TokenType::TK_IDENTIFIER );
-			}
-			Token trailing_return_type = *current_token;
-			if( current_token->Type() == TokenType::TK_ARROW ){
-				Accept( TokenType::TK_ARROW ); // consume ->
-				trailing_return_type = *current_token;
-				Expect( TokenType::TK_IDENTIFIER );
-			}
+			std::unique_ptr<ParameterlistDeclaration> parameter_list = ParseParameterList();
+                        Accept( TokenType::TK_RPAREN );
+			std::unique_ptr<TypeSpecifier> return_type;
+                        if( current_token->Type() == TokenType::TK_ARROW ){
+                            Accept( TokenType::TK_ARROW );
+                            return_type = ParseTypeSpecifier();
+                        }
+			
 			std::unique_ptr<Statement> function_body = ParseCompoundStatement();
-			return ASTFactory::GetFunctionDeclaration( functional_specifier, token, function_name, std::move( parameter_list ),
-				trailing_function_property, trailing_return_type, std::move( function_body ) );
+			return ASTFactory::GetFunctionDeclaration( token, std::move( function_specifier ), function_name, std::move( parameter_list ),
+                        std::move( return_type ), std::move( function_body ) );
 		}
 
 		// To-Do -> Implement predence climbing as used in Clang.
@@ -536,22 +500,16 @@ namespace MaryLang
 			case TokenType::TK_LEAVE:
 				return ParseJumpStatement();
 			case TokenType::TK_VAR: // declaration statement
-			case TokenType::TK_INT:
-			case TokenType::TK_DOUBLE:
 			case TokenType::TK_CLASS:
-			case TokenType::TK_STRING:
-			case TokenType::TK_FUNCTION:
-			case TokenType::TK_STATIC:
-			case TokenType::TK_VIRTUAL:
+                        case TokenType::TK_ENUM:
 			case TokenType::TK_NAMESPACE:
 			case TokenType::TK_DECLTYPE:
+                        case TokenType::TK_FUNCTION:
 				return ParseDeclarationStatement();
 			case TokenType::TK_ISIT: // labelled statement
 				return  ParseLabelledStatement();
-			case TokenType::TK_IDENTIFIER:
 			default:
 				return ParseExpressionStatement();
-				break;
 			}
 		}
 	} //namespace Parser
