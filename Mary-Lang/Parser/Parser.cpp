@@ -96,12 +96,12 @@ namespace MaryLang
 			Accept( TokenType::TK_IF ); // consume "if"
 			Expect( TokenType::TK_LPAREN ); // consume "("
 			std::unique_ptr<Expression> conditional_expression;
-                        std::unique_ptr<Declaration> declaration;
+			std::unique_ptr<Declaration> declaration;
 			if( current_token->Type() == TokenType::TK_VAR ){
-			    declaration = ParseDeclarationStatement( );
+				declaration = ParseDeclarationStatement( );
 			} else {
-                             conditional_expression = ParseExpression();
-                        }
+				conditional_expression = ParseExpression();
+			}
 			Expect( TokenType::TK_RPAREN );
 			std::unique_ptr<Statement> statement_body = ParseStatement();
 			std::unique_ptr<Statement> else_body = nullptr;
@@ -261,26 +261,26 @@ namespace MaryLang
 
 		std::unique_ptr<Declaration> Parser::ParseFunctionDeclaration()
 		{
-                        Token const token = *current_token;
+			Token const token = *current_token;
 			Accept( TokenType::TK_FUNCTION );
-                        std::unique_ptr<FunctionSpecifier> function_specifier;
+			std::unique_ptr<FunctionSpecifier> function_specifier;
 			if( current_token->Type() == TokenType::TK_LBRACKET ){
-			    function_specifier = ParseFunctionSpecifier();
+				function_specifier = ParseFunctionSpecifier();
 			}
 			Token const function_name = *current_token;
 			Accept( TokenType::TK_IDENTIFIER );
 			Accept( TokenType::TK_LPAREN );
 			std::unique_ptr<ParameterlistDeclaration> parameter_list = ParseParameterList();
-                        Accept( TokenType::TK_RPAREN );
+			Accept( TokenType::TK_RPAREN );
 			std::unique_ptr<TypeSpecifier> return_type;
-                        if( current_token->Type() == TokenType::TK_ARROW ){
-                            Accept( TokenType::TK_ARROW );
-                            return_type = ParseTypeSpecifier();
-                        }
-			
+			if( current_token->Type() == TokenType::TK_ARROW ){
+				Accept( TokenType::TK_ARROW );
+				return_type = ParseTypeSpecifier();
+			}
+
 			std::unique_ptr<Statement> function_body = ParseCompoundStatement();
 			return ASTFactory::GetFunctionDeclaration( token, std::move( function_specifier ), function_name, std::move( parameter_list ),
-                        std::move( return_type ), std::move( function_body ) );
+				std::move( return_type ), std::move( function_body ) );
 		}
 
 		// To-Do -> Implement predence climbing as used in Clang.
@@ -501,10 +501,10 @@ namespace MaryLang
 				return ParseJumpStatement();
 			case TokenType::TK_VAR: // declaration statement
 			case TokenType::TK_CLASS:
-                        case TokenType::TK_ENUM:
+			case TokenType::TK_ENUM:
 			case TokenType::TK_NAMESPACE:
 			case TokenType::TK_DECLTYPE:
-                        case TokenType::TK_FUNCTION:
+			case TokenType::TK_FUNCTION:
 				return ParseDeclarationStatement();
 			case TokenType::TK_ISIT: // labelled statement
 				return  ParseLabelledStatement();

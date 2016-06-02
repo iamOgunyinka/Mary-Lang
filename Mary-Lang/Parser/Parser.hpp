@@ -46,7 +46,7 @@ namespace MaryLang
 
 			typedef std::pair<int, Associativity> PrecAssocPair;
 			PrecAssocPair GetPrecedence( TokenType tt );
-			
+
 			void Accept( TokenType tt );
 			void Expect( TokenType tt );
 			void NextToken();
